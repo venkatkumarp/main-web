@@ -1,0 +1,37 @@
+name: "Sonar: SonarQube Web"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]  # Includes 'closed' for merged PRs
+    paths:
+      - './backend/**'
+      - './frontend/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  Sonar-Scan-Backend:
+    name: SonarQube Scan for Backend Code  
+    if: contains(github.event.pull_request.changed_files, 'backend/') && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run SonarQube for Backend After Merge
+        run: |
+          echo "Running SonarQube scan for the backend..."
+          echo "Working Directory: ./backend"
+          # Simulate the SonarQube token usage
+          echo "Using SonarQube Token: SONAR_TOKEN_BACKEND"
+
+  Sonar-Scan-Frontend:
+    name: SonarQube Scan for Frontend Code  
+    if: contains(github.event.pull_request.changed_files, 'frontend/') && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run SonarQube for Frontend After Merge
+        run: |
+          echo "Running SonarQube scan for the frontend..."
+          echo "Working Directory: ./frontend"
+          # Simulate the SonarQube token usage
+          echo "Using SonarQube Token: SONAR_TOKEN_FRONTEND"
