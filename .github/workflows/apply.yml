@@ -1,0 +1,86 @@
+name: "Release: AWS Infrastructure"
+run-name: "Release: ${{ github.event.release.name }} | Description: ${{ github.event.release.body }} | Deployer: @${{ github.actor }}"
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+      plan_only:
+        description: "Run Terraform plan only"
+        required: false
+        default: true
+        type: boolean
+
+      destroy:
+        description: "Destroy the infrastructure"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  aws_infra_deployment_dev:
+    name: AWS Infra Dev Environment Deployment
+    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    if: ${{ inputs.environment == 'dev' }}
+    with:
+      environment: dev
+      plan_only: ${{ inputs.plan_only }}
+      destroy: ${{ inputs.destroy }}
+      working_dir: ./platforms/aws
+      backend_config_path: ./platforms/tf_backend/${{ inputs.environment }}.tfbackend
+      backend_key: infra/aws/${{ inputs.environment }}/infra.aws.tfstate
+    secrets:
+      org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
+      aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
+      tf_env_vars: |
+        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
+
+  aws_infra_deployment_prod:
+    name: AWS Infra Prod Environment Deployment
+    needs: aws_infra_deployment_dev
+    if: ${{ !cancelled() && !failure() && inputs.environment == 'prod' }}
+    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    with:
+      environment: ${{ inputs.environment }}
+      working_dir: ./platforms/aws/
+      backend_config_path: ./platforms/tf_backend/${{ inputs.environment }}.tfbackend
+      backend_key: infra/aws/${{ inputs.environment }}/infra.aws.tfstate
+      plan_only: ${{ inputs.plan_only }}
+      destroy: ${{ inputs.destroy }}
+    secrets:
+      org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
+      aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
+      tf_env_vars: |
+        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
+
+  generate_deployment_report:
+    name: Generate Deployment Report
+    runs-on: ubuntu-latest
+    needs: [aws_infra_deployment_dev, aws_infra_deployment_prod]
+    steps:
+      - name: Generate Deployment Summary
+        run: |
+          echo "# AWS Infra Deployment Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Run Number | Environment | Author | Deploy Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|-------------|--------|---------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ${{ github.run_number }} | ${{ inputs.environment }} | ${{ github.actor }} | success |" >> $GITHUB_STEP_SUMMARY
+          echo "Job summary generated at run-time" >> $GITHUB_STEP_SUMMARY
