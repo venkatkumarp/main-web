@@ -1,0 +1,8 @@
+name: Trigger Terraform Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-terraform:
+    uses: venkatkumarp/main-workflows/.github/workflows/test-workflow.yml@main # Adjust this to your repository pat
