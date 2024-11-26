@@ -5,4 +5,9 @@ on:
 
 jobs:
   trigger-terraform:
-    uses: venkatkumarp/main-workflows/.github/workflows/test-workflow.yml@main # Adjust this to your repository pat
+    uses: venkatkumarp/main-workflows/.github/workflows/test-workflow.yml@main
+    with:
+      aws_region: us-east-1
+    secrets:
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
