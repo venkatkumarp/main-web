@@ -42,7 +42,7 @@ locals {
   # Web secrets configuration
   web_secrets = {
     "440744244651" = {
-      client_id = "WEB_CLIENTID_${local.environment}"
+      client_secret = "WEB_CLIENTID_${local.environment}"
       code_verifier = "WEB_CODE_CHALLENGE_${local.environment}"
       code_challenge = "WEB_CODE_VERIFIER_${local.environment}"
     }
