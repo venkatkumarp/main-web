@@ -1,5 +1,5 @@
 bucket         = "pvenkata-data"
-kms_key_id     = "arn:aws:kms:eu-central-1:440744244651:key/28b26685-4158-48f1-8fc8-67be8bf7340f"
+kms_key_id     = "arn:aws:kms:eu-central-1:440744244651:key/67b80564-22d9-4cbb-bd04-ccf1162e5736"
 dynamodb_table = "tfstate-lock-table"
 region         = "eu-central-1"
 encrypt        = true
