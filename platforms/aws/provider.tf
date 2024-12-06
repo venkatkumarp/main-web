@@ -1,9 +1,6 @@
 # AWS providers
 terraform {
   backend "s3" {
-    bucket = "tfstsate"
-    key    = "dev/terraform.tfstate"
-    region = "us-east-1"
   }
   required_providers {
     aws = {
@@ -17,7 +14,7 @@ locals {
   default_tags = {
     ProjectName = local.project_name
     managed_by  = "terraform"
-    Repository  = "https://github.com/bayer-int/ph-rd-time-tracking-infra"
+    Repository  = "https://github.com/"
   }
 }
 
