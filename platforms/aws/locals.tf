@@ -21,7 +21,7 @@ locals {
 
   aws_region = "eu-central-1"
 
-  aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
+  aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-roles"
 
 
   network_config = {
