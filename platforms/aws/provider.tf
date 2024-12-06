@@ -38,7 +38,7 @@ provider "aws" {
   alias  = "us-east-1"
   region = "us-east-1"
   assume_role {
-    role_arn = local.aws_infra_deploy_role
+    role_arn = local.aws_infra_deploy_roles
   }
 }
 
