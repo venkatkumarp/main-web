@@ -16,6 +16,7 @@ module "secrets_manager" {
   project_name     = local.project_name
   default_tags     = local.default_tags
   environment      = local.environment
+  aws_account_id     = var.aws_account_id
   client_secret    = local.web_secrets[var.aws_account_id].client_secret
   code_verifier    = local.web_secrets[var.aws_account_id].code_verifier
   code_challenge   = local.web_secrets[var.aws_account_id].code_challenge              
