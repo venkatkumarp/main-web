@@ -1,5 +1,5 @@
-bucket         = "tfstate"
-#kms_key_id     = "arn:aws:kms:eu-central-1:590183961751:key/e8b777f9-1913-4ad8-9d4e-a78167477d60"
-#dynamodb_table = "ph-rd-time-tracking-dev-dynamodb-state-lock-table"
+bucket         = "pvenkata-data"
+kms_key_id     = "arn:aws:kms:eu-central-1:440744244651:key/28b26685-4158-48f1-8fc8-67be8bf7340f"
+dynamodb_table = "tfstate-lock-table"
 region         = "us-east-1"
 encrypt        = true
