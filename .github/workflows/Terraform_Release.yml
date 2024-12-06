@@ -39,7 +39,7 @@ defaults:
 jobs:
   aws_infra_deployment_dev:
     name: AWS Infra Dev Environment Deployment
-    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    uses: venkatkumarp/main-workflows/blob/.github/workflows/terraform-deploy.yml@main
     if: ${{ inputs.environment == 'dev' }}
     with:
       environment: dev
@@ -52,13 +52,13 @@ jobs:
       org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
       aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
       tf_env_vars: |
-        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
+        echo TF_VAR_aws_account_id="440744244651" >> $GITHUB_ENV
 
   aws_infra_deployment_prod:
     name: AWS Infra Prod Environment Deployment
     needs: aws_infra_deployment_dev
     if: ${{ !cancelled() && !failure() && inputs.environment == 'prod' }}
-    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    uses: venkatkumarp/main-workflows/blob/.github/workflows/terraform-deploy.yml@main
     with:
       environment: ${{ inputs.environment }}
       working_dir: ./platforms/aws/
@@ -75,7 +75,7 @@ jobs:
   generate_deployment_report:
     name: Generate Deployment Report
     runs-on: ubuntu-latest
-    needs: [aws_infra_deployment_dev, aws_infra_deployment_prod]
+    needs: [aws_infra_deployment_dev]
     steps:
       - name: Generate Deployment Summary
         run: |
