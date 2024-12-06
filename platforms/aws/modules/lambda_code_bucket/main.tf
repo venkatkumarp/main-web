@@ -15,13 +15,7 @@ resource "aws_s3_bucket" "lambda_code" {
 
   tags = var.default_tags
 }
-resource "aws_s3_bucket_ownership_controls" "ownership_control" {
-  bucket = aws_s3_bucket.lambda_code.id
 
-  rule {
-    object_ownership = "BucketOwnerPreferred"
-  }
-}
 resource "aws_s3_bucket_public_access_block" "lambda_code" {
   bucket = aws_s3_bucket.lambda_code.id
 
