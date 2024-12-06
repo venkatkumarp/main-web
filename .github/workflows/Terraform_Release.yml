@@ -61,16 +61,16 @@ jobs:
     uses: venkatkumarp/main-workflows/.github/workflows/terraform-deploy.yml@main
     with:
       environment: ${{ inputs.environment }}
+      plan_only: ${{ inputs.plan_only }}
+      destroy: ${{ inputs.destroy }}
       working_dir: ./platforms/aws/
       backend_config_path: ./platforms/tf_backend/${{ inputs.environment }}.tfbackend
       backend_key: infra/aws/${{ inputs.environment }}/infra.aws.tfstate
-      plan_only: ${{ inputs.plan_only }}
-      destroy: ${{ inputs.destroy }}
     secrets:
       org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
       aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
       tf_env_vars: |
-        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
+        echo TF_VAR_aws_account_id="423623838336" >> $GITHUB_ENV
 
   generate_deployment_report:
     name: Generate Deployment Report
