@@ -39,7 +39,7 @@ defaults:
 jobs:
   aws_infra_deployment_dev:
     name: AWS Infra Dev Environment Deployment
-    uses: venkatkumarp/main-workflows/blob/.github/workflows/terraform-deploy.yml@main
+    uses: venkatkumarp/main-workflows/.github/workflows/terraform-deploy.yml@main
     if: ${{ inputs.environment == 'dev' }}
     with:
       environment: dev
@@ -58,7 +58,7 @@ jobs:
     name: AWS Infra Prod Environment Deployment
     needs: aws_infra_deployment_dev
     if: ${{ !cancelled() && !failure() && inputs.environment == 'prod' }}
-    uses: venkatkumarp/main-workflows/blob/.github/workflows/terraform-deploy.yml@main
+    uses: venkatkumarp/main-workflows/.github/workflows/terraform-deploy.yml@main
     with:
       environment: ${{ inputs.environment }}
       working_dir: ./platforms/aws/
