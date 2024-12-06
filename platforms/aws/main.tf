@@ -10,3 +10,13 @@ module "lambda_code_bucket" {
   aws_account_id     = var.aws_account_id
   environment        = local.environment
 }
+module "secrets_manager" {
+  source           = "./modules/secrets_manager"
+  secret_name      = "web-secrets-${local.environment}"
+  project_name     = local.project_name
+  default_tags     = local.default_tags
+  environment      = local.environment
+  client_secret    = local.web_secrets[var.aws_account_id].client_secret
+  code_verifier    = local.web_secrets[var.aws_account_id].code_verifier
+  code_challenge   = local.web_secrets[var.aws_account_id].code_challenge              
+}

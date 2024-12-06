@@ -39,6 +39,12 @@ locals {
 
     }
   }
-
+  # Web secrets configuration
+  web_secrets = {
+    "440744244651" = {
+      client_secret = "${local.environment}-client_secret"
+      code_verifier = "${local.environment}-code_verifier"
+      code_challenge = "${local.environment}-code_challenge"
+    }
+  }
 }
-
