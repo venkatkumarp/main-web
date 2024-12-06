@@ -1,0 +1,5 @@
+bucket         = "tfprodbc"
+kms_key_id     = "arn:aws:kms:eu-central-1:423623838336:key/8feb13ae-835f-49cd-8135-28c60f0bfdac"
+dynamodb_table = "tfstate-lock-prod-table"
+region         = "eu-central-1"
+encrypt        = true
