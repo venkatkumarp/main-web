@@ -24,8 +24,8 @@ module "secrets_manager" {
 
 module "secrets_manager" {
   source        = "./modules/secrets_manager"
-  secret_name   = "${local.environment}-client-secret"
-  aws_account_id     = var.aws_account_id
+  secret_name   = local.secret_name
+  #aws_account_id     = var.aws_account_id
   project_name     = local.project_name
   environment      = local.environment
   default_tags     = local.default_tags

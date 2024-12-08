@@ -3,7 +3,7 @@ variable "client_secret" {}
 variable "code_verifier" {}
 variable "code_challenge" {}*/
 
-variable "aws_account_id" {}
+#variable "aws_account_id" {}
 
 variable "project_name" {
   description = "Project name for S3 bucket"
