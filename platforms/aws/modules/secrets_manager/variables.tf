@@ -1,7 +1,7 @@
-variable "secret_name" {}
+/*variable "secret_name" {}
 variable "client_secret" {}
 variable "code_verifier" {}
-variable "code_challenge" {}
+variable "code_challenge" {}*/
 
 variable "aws_account_id" {}
 
@@ -16,5 +16,15 @@ variable "default_tags" {
 
 variable "environment" {
   description = "Environment for the deployment (dev, QA, prod)"
+  type        = string
+}
+
+####
+variable "secret_values" {
+  description = "Key-value pairs for secret data"
+  type        = map(string)
+}
+variable "secret_name" {
+  description = "The name of the secret"
   type        = string
 }
