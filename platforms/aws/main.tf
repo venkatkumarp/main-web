@@ -22,9 +22,13 @@ module "secrets_manager" {
   code_challenge   = local.web_secrets[var.aws_account_id].code_challenge              
 }*/
 
-module "secret_manager" {
-  source        = "./modules/secret_manager"
+module "secrets_manager" {
+  source        = "./modules/secrets_manager"
   secret_name   = "${local.environment}-client-secret"
+  aws_account_id     = var.aws_account_id
+  project_name     = local.project_name
+  environment      = local.environment
+  default_tags     = local.default_tags
   #description   = "Secrets for ${local.environment} environment"
   secret_values = {
     client_secret  = var.client_secret
