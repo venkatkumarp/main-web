@@ -30,3 +30,38 @@ variable "s3_bucket_name" {
   description = "The S3 bucket name to use for downloading the Lambda code"
   type        = string
 }
+########################
+variable "clientID" {
+  description = "Client ID"
+  type        = string
+}
+
+variable "cdnurl" {
+  description = "CDN URL"
+  type        = string
+}
+
+variable "tenantId" {
+  description = "Tenant ID"
+  type        = string
+}
+
+variable "redirectUri" {
+  description = "Redirect URI"
+  type        = string
+}
+
+variable "client_secret" {
+  description = "Client Secret"
+  type        = string
+}
+
+variable "code_verifier" {
+  description = "Code Verifier"
+  type        = string
+}
+
+variable "code_challenge" {
+  description = "Code Challenge"
+  type        = string
+}
