@@ -47,9 +47,9 @@ variable "cdnurl" {
   description = "cloudfront url"
   type        = string
 }
-code_challenge_method
+
 variable "code_challenge_method" {
-  description = "cloudfront url"
+  description = "code challenge method value"
   type        = string
 }
 
