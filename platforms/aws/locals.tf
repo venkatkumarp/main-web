@@ -56,6 +56,7 @@ locals {
       cdnurl    = "cdn_url_need_to_add"
       tenantId    = "this-is-tenantid"
       redirectUri = "this-is-redirect-uri-value"
+      code_challenge_method = "addmethod"
       secret_name = "${local.environment}-client-secret"
     }
   }, var.aws_account_id, null)
