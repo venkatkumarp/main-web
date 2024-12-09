@@ -30,6 +30,10 @@ variable "secret_name" {
 }
 
 
+variable "clientID" {
+description = "cleint ID"
+type = string
+}
 variable "tenantId" {
   description = "Tenant ID for the secret"
   type        = string
@@ -39,3 +43,9 @@ variable "redirectUri" {
   description = "Redirect URI for the secret"
   type        = string
 }
+variable "cdnurl" {
+  description = "cloudfront url"
+  type        = string
+}
+
+
