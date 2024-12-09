@@ -25,7 +25,7 @@ on:
       destroy:
         description: "Destroy the infrastructure"
         required: false
-        default: false
+        default: true
         type: boolean
 
 concurrency:
