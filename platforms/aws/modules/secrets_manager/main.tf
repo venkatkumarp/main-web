@@ -17,7 +17,12 @@ resource "aws_secretsmanager_secret" "secret" {
 
 resource "aws_secretsmanager_secret_version" "secret_version" {
   secret_id     = aws_secretsmanager_secret.secret.id
-  secret_string = jsonencode(var.secret_values)
-  tenantId       = var.tenantId
-  redirectUri    = var.redirectUri
+   # secret_string = jsonencode(var.secret_values)
+  secret_string = jsonencode({
+    client_secret  = var.secret_values["client_secret"]
+    code_verifier  = var.secret_values["code_verifier"]
+    code_challenge = var.secret_values["code_challenge"]
+    tenantId       = var.tenantId
+    redirectUri    = var.redirectUri
+  })
 }
