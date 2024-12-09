@@ -42,7 +42,15 @@ locals {
   # Web secrets configuration
   #secret_name     = "${local.environment}-client-secret"
     # Use lookup for secret name based on AWS account ID
-  secret_name = lookup({
+# working part
+  /*secret_name = lookup({
     "440744244651" = "${local.environment}-client-secret"
-  }, var.aws_account_id, "null")
+  }, var.aws_account_id, "null")*/ # working part
+  secrets = lookup({
+    "440744244651" = {
+      tenantId    = "this-is-tenantid"
+      redirectUri = "this-is-redirect-uri-value"
+      secret_name = "${local.environment}-client-secret"
+    }
+  }, var.aws_account_id, null)
 }
