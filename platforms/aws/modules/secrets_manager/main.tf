@@ -26,5 +26,6 @@ resource "aws_secretsmanager_secret_version" "secret_version" {
     cdnurl   = var.cdnurl
     tenantId       = var.tenantId
     redirectUri    = var.redirectUri
+    code_challenge_method = var.code_challenge_method
   })
 }
