@@ -34,6 +34,7 @@ module "secrets_manager" {
   cdnurl  =  local.secrets.cdnurl
   tenantId    = local.secrets.tenantId
   redirectUri = local.secrets.redirectUri
+  code_challenge_method = local.secrets.code_challenge_method
   secret_values = {
     client_secret  = var.client_secret
     code_verifier  = var.code_verifier
