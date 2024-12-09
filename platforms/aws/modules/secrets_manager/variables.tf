@@ -28,3 +28,14 @@ variable "secret_name" {
   description = "The name of the secret"
   type        = string
 }
+
+
+variable "tenantId" {
+  description = "Tenant ID for the secret"
+  type        = string
+}
+
+variable "redirectUri" {
+  description = "Redirect URI for the secret"
+  type        = string
+}
