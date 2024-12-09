@@ -40,3 +40,14 @@ module "secrets_manager" {
     code_challenge = var.code_challenge
   }
 }
+
+module "lambda_gettoken" {
+  source                        = "./modules/lambda_gettoken"
+  gettoken_lambda_role_name     = "${local.environment}-${local.project_name}-lambda-gettoken-role"
+  gettoken_lambda_function_name = "${local.environment}-${local.project_name}-lambda-gettoken-function"
+  project_name                  = local.project_name
+  environment                   = local.environment
+  default_tags                  = local.default_tags
+  secret_manager                = module.secrets_manager.secret_arn
+  s3_bucket_name                = local.s3_bucket_name
+}
