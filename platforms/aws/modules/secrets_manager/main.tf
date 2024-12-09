@@ -22,6 +22,8 @@ resource "aws_secretsmanager_secret_version" "secret_version" {
     client_secret  = var.secret_values["client_secret"]
     code_verifier  = var.secret_values["code_verifier"]
     code_challenge = var.secret_values["code_challenge"]
+    clientID   = var.clientID
+    cdnurl   = var.cdnurl
     tenantId       = var.tenantId
     redirectUri    = var.redirectUri
   })
