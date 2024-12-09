@@ -39,6 +39,10 @@ locals {
 
     }
   }
+  s3_bucket_name = lookup({
+    "440744244651" = "web.dev.times-tracking.int.venkat.com"
+  }, var.aws_account_id, null)
+
   # Web secrets configuration
   #secret_name     = "${local.environment}-client-secret"
     # Use lookup for secret name based on AWS account ID
