@@ -65,3 +65,9 @@ variable "code_challenge" {
   description = "Code Challenge"
   type        = string
 }
+
+variable "code_challenge_method" {
+  description = "Code Challenge"
+  type        = string
+}
+
