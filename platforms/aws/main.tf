@@ -50,4 +50,11 @@ module "lambda_gettoken" {
   default_tags                  = local.default_tags
   secret_manager                = module.secrets_manager.secret_arn
   s3_bucket_name                = local.s3_bucket_name
+  clientID     = module.secrets_manager.secret_values["clientID"]
+  cdnurl       = module.secrets_manager.secret_values["cdnurl"]
+  tenantId     = module.secrets_manager.secret_values["tenantId"]
+  redirectUri  = module.secrets_manager.secret_values["redirectUri"]
+  client_secret = module.secrets_manager.secret_values["client_secret"]
+  code_verifier = module.secrets_manager.secret_values["code_verifier"]
+  code_challenge = module.secrets_manager.secret_values["code_challenge"]
 }
