@@ -53,7 +53,7 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
   function_name = var.gettoken_lambda_function_name
   runtime       = "python3.12"
   role          = aws_iam_role.gettoken_lambda_role.arn
-  handler       = "lambda_function.lambda_handler"
+  handler       = "point-handler.point_handler"
   filename      = data.archive_file.lambda_zip.output_path
   #s3_bucket     = var.s3_bucket_name
   #s3_key        = "lambda_function.zip"
