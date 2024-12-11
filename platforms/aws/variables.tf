@@ -17,3 +17,5 @@ variable "code_challenge" {
   description = "Code challenge for the environment"
   type        = string
 }
+
+variable "commit_id" {}
