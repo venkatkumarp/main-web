@@ -22,6 +22,7 @@ module "secrets_manager" {
   code_challenge   = local.web_secrets[var.aws_account_id].code_challenge              
 }*/
 
+
 module "secrets_manager" {
   source        = "./modules/secrets_manager"
   # secret_name   = local.secret_name

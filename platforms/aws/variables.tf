@@ -7,7 +7,6 @@ variable "client_secret" {
   description = "Client secret for the environment"
   type        = string
 }
-
 variable "code_verifier" {
   description = "Code verifier for the environment"
   type        = string
