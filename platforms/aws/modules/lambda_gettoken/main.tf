@@ -1,3 +1,9 @@
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_dir  = "./modules/cloudfront/point-handler"
+  output_path = "./modules/cloudfront/point-handler-${var.commit_id}.zip"
+}
+
 resource "aws_iam_role" "gettoken_lambda_role" {
   name = var.gettoken_lambda_role_name
   assume_role_policy = jsonencode({
@@ -48,8 +54,9 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
   runtime       = "python3.12"
   role          = aws_iam_role.gettoken_lambda_role.arn
   handler       = "lambda_function.lambda_handler"
-  s3_bucket     = var.s3_bucket_name
-  s3_key        = "lambda_function.zip"
+  filename      = data.archive_file.lambda_zip.output_path
+  #s3_bucket     = var.s3_bucket_name
+  #s3_key        = "lambda_function.zip"
   publish       = true
   memory_size   = 1024
   ephemeral_storage {
