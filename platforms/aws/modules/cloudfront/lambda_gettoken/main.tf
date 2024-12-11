@@ -1,7 +1,8 @@
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_dir  = "./modules/cloudfront/point-handler"
-  output_path = "./modules/cloudfront/point-handler-${var.commit_id}.zip"
+  # output_path = "./modules/cloudfront/point-handler-${var.commit_id}.zip"
+  output_path = "point-handler-${var.commit_id}.zip"
 }
 
 resource "aws_iam_role" "gettoken_lambda_role" {
