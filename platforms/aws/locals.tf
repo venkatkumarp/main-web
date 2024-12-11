@@ -1,3 +1,4 @@
+#This locals file will use for multiple environments
 locals {
 
   project_name = "time-test"
