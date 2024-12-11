@@ -57,7 +57,7 @@ locals {
       tenantId    = "this-is-tenantid"
       redirectUri = "this-is-redirect-uri-value"
       code_challenge_method = "addmethod"
-      secret_name = "${local.environment}-client-secret"
+      secret_name = "/tt/${local.environment}/client-secret"
     }
   }, var.aws_account_id, null)
 }
