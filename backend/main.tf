@@ -67,10 +67,12 @@ locals {
 
   environments = {
     "440744244651" = "dev"
+    "423623838336" = "prod"
   }
 
   suffixes = {
     "440744244651" = "dev"
+    "423623838336" = "prod"
   }
 
   aws_region = "eu-central-1"
@@ -80,6 +82,7 @@ locals {
 
   bucket_names = {
     "440744244651" = "web.dev.times-tracking.int.venkat.com"
+    "423623838336" = "tfprodbc"
   }
   bucket_name = lookup(local.bucket_names, var.aws_account_id, "invalid-bucket")
 
