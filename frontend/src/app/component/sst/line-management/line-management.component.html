@@ -1,0 +1,99 @@
+<div class="d-flex justify-content-center flex-column" formGroupName="lineManagementData">
+    <span class="section-head">Line Management</span>
+    <div class="d-flex flex-row mt-4">
+        <p-inputSwitch name="selfApprover" formControlName="selfApprover" trueValue="yes" falseValue="no"/>
+        <label for="selfApprover" class="switch-label">Self Approver</label>
+        <i class="bi bi-info-circle-fill m-auto me-0" [pTooltip]="tooltip.selfapprover" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete form-autocomplete" name="supervisorId" formControlName="supervisorId" [suggestions]="supervisorSuggestion" (completeMethod)="autoCompleteSearch($event,'supervisorId')" optionLabel="email" optionValue="email">
+                <ng-template let-supervisorId pTemplate="item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex flex-row flex-nowrap">
+                            <div>
+                                <p-avatar [label]="getInitials(supervisorId.fullName)" [styleClass]="'text-white mr-2 status-'+supervisorId.status" size="large" shape="circle" />
+                            </div>
+                            <div class="d-flex flex-column flex-nowrap ms-1">
+                                <div [innerHTML]="supervisorId.fullName | highlight : supervisorHighlight"></div>
+                                <div [innerHTML]="supervisorId.email | highlight : supervisorHighlight"></div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="supervisorId">Supervisor</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.supervisor" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete form-autocomplete" name="backupId" formControlName="backupId" [suggestions]="backupSuggestion" (completeMethod)="autoCompleteSearch($event,'backupId')" optionLabel="email">
+                <ng-template let-backupId pTemplate="item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex flex-row flex-nowrap">
+                            <div>
+                                <p-avatar [label]="getInitials(backupId.fullName)" [styleClass]="'text-white mr-2 status-'+backupId.status" size="large" shape="circle" />
+                            </div>
+                            <div class="d-flex flex-column flex-nowrap ms-1">
+                                <div [innerHTML]="backupId.fullName | highlight : backupHighlight"></div>
+                                <div [innerHTML]="backupId.email | highlight : backupHighlight"></div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="backupId">Backup Approver</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.backup" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete form-autocomplete" name="timekeepingAssistantId" formControlName="timekeepingAssistantId" [suggestions]="timeAssistSuggestion" (completeMethod)="autoCompleteSearch($event,'timekeepingAssistantId')" optionLabel="email">
+                <ng-template let-timekeepingAssistantId pTemplate="item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex flex-row flex-nowrap">
+                            <div>
+                                <p-avatar [label]="getInitials(timekeepingAssistantId.fullName)" [styleClass]="'text-white mr-2 status-'+timekeepingAssistantId.status" size="large" shape="circle" />
+                            </div>
+                            <div class="d-flex flex-column flex-nowrap ms-1">
+                                <div [innerHTML]="timekeepingAssistantId.fullName | highlight : timeAssistHighlight"></div>
+                                <div [innerHTML]="timekeepingAssistantId.email | highlight : timeAssistHighlight"></div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="timekeepingAssistantId">Timekeeping Assistant</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.ttassist" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div> 
+    
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete form-autocomplete" name="timekeepingAssistant2Id" formControlName="timekeepingAssistant2Id" [suggestions]="timeAssist2Suggestion" (completeMethod)="autoCompleteSearch($event,'timekeepingAssistant2Id')" optionLabel="email">
+                <ng-template let-timekeepingAssistant2Id pTemplate="item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex flex-row flex-nowrap">
+                            <div>
+                                <p-avatar [label]="getInitials(timekeepingAssistant2Id.fullName)" [styleClass]="'text-white mr-2 status-'+timekeepingAssistant2Id.status" size="large" shape="circle" />
+                            </div>
+                            <div class="d-flex flex-column flex-nowrap ms-1">
+                                <div [innerHTML]="timekeepingAssistant2Id.fullName | highlight : timeAssist2Highlight"></div>
+                                <div [innerHTML]="timekeepingAssistant2Id.email | highlight : timeAssist2Highlight"></div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="timekeepingAssistant2Id">Timekeeping Assistant 2</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.ttassist2" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+</div>

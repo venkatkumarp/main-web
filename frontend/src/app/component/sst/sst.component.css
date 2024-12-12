@@ -1,0 +1,97 @@
+.label{
+    font-size: 2rem;
+    color:#180078
+}
+
+.autocomplete{
+    width: 50%;
+}
+
+.autocomplete .p-autocomplete-input, .p-calendar input, .autocomplete ul{
+    width:100%;
+    border: none;
+    border-bottom: grey solid 1px;
+    border-radius: 0;
+}
+
+.autocomplete .p-autocomplete-input:focus, .autocomplete ul:focus{
+    border: none;
+    box-shadow: none;
+    border-bottom: rgb(101, 121, 255) solid 2px;
+}
+
+.autocomplete .p-autocomplete-items, .p-calendar input{
+    padding: 0;
+}
+
+.p-calendar input{
+    margin-left: 0.7rem;
+}
+.text-white{
+    color: white;
+}
+.status-0{
+    background: #180078;
+}
+  
+.status-1{
+    background: darkred;
+}
+      
+.status-2{
+    background: #A9A9A9;
+}
+   
+b{
+    color: black;
+}
+.p-tooltip-text b{
+    color: white;
+}
+
+.w-custom{
+    max-width: 25vw
+}
+.form-input{
+    width: 100%;
+    border: none;
+    border-bottom: grey solid 1px;
+    border-radius: 0;
+    padding: 0;
+}
+
+.form-autocomplete{
+    width: 100%
+}
+
+.form-autocomplete .p-autocomplete-input{
+    padding: 0;
+}
+.p-float-label label{
+    margin-left: -0.75rem;
+}
+.p-inputtext:enabled:focus{
+    box-shadow: none;
+}
+
+.switch-label{
+    font-size: 1rem;
+    margin-left: 1rem;
+}
+
+.section-head{
+    font-size: 2rem;
+    font-weight: 300;
+    color: #180078;
+}
+
+.section-head span.active{
+    font-size: 2rem;
+    font-weight: 300;
+    color: #180078;
+}
+.section-head span.inactive{
+    font-size: 2rem;
+    font-weight: 300;
+    color: darkred;
+}

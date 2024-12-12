@@ -1,0 +1,75 @@
+<div class="d-flex justify-content-center flex-column" formGroupName="businessUnitData">
+    <span class="section-head bu">Business Unit</span>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete form-autocomplete" name="costCenter" formControlName="costCenter" [suggestions]="costCenterSuggestion" (completeMethod)="costCenterSearch($event)" optionLabel="costCenter" optionValue="costCenter" (onSelect)="costCenterSelected($event)">
+                <ng-template let-data pTemplate="item">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex flex-row flex-nowrap">
+                            <div>
+                                <p-avatar [label]="" [styleClass]="'text-white mr-2 status-'+data.status" size="large" />
+                            </div>
+                            <div class="d-flex flex-column flex-nowrap ms-1">
+                                <div [innerHTML]="data.costCenter | highlight : ccHighlight"></div>
+                                <div [innerHTML]="data.country+ ' | ' +data.legalEntity | highlight : ccHighlight"></div>
+                                <div [innerHTML]="data.topFunction+ ' | ' +data.subFunction | highlight : ccHighlight"></div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="supervisorId">Cost Center</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.costcenter" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="name" type="text" pInputText formControlName="country" class="form-input" />
+            <label for="name">Country</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.country" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="name" type="text" pInputText formControlName="legalEntity" class="form-input" />
+            <label for="name">Legal Entity</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.legal" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="name" type="text" pInputText formControlName="topFunction" class="form-input" />
+            <label for="name">Top Function</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.topfn" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="name" type="text" pInputText formControlName="function" class="form-input" />
+            <label for="name">Function</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.fn" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="name" type="text" pInputText formControlName="subFunction" class="form-input" />
+            <label for="name">Sub Function</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.subfn" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete form-autocomplete" name="subSubFunction" formControlName="subSubFunction" [suggestions]="subsubFnSuggestion" (completeMethod)="searchsubsubFn($event)">
+                <ng-template let-company pTemplate="item">
+                    <div class="flex align-items-center gap-2">
+                        <div [innerHTML]="company | highlight : subsubFnHighlight"></div>
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="subSubFunction">Sub Sub Function</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.subsubfn" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+</div>

@@ -1,0 +1,25 @@
+<span class="section-head">Status - <span *ngIf="status" class="active">Active</span><span *ngIf="!status" class="inactive">Inactive</span></span>
+<form [formGroup]="childForm">
+<div class="d-flex justify-content-center flex-column" formGroupName="statusData">
+    <div class="d-flex flex-row mt-4">
+        <p-inputSwitch name="status" [(ngModel)]="status" [ngModelOptions]="{standalone: true}"/>
+        <label for="status" class="switch-label">Active User</label>
+        <i class="bi bi-info-circle-fill m-auto me-0" [pTooltip]="tooltip.status" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <i class="bi bi-calendar-week m-auto" pTooltip="Enter your username" tooltipPosition="bottom"></i>
+        <p-floatLabel class="mt-4 w-100">
+            <p-calendar formControlName="employeeStartDate" dateFormat="yy-mm-dd" (onSelect)="getStaus()" dataType="string" styleClass="w-100"/>
+            <label for="startDate" class="ms-0">Start Date</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.start" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <i class="bi bi-calendar-week m-auto" pTooltip="Enter your username" tooltipPosition="bottom"></i>
+        <p-floatLabel class="mt-4 w-100">
+            <p-calendar formControlName="employeeEndDate" dateFormat="yy-mm-dd" (onSelect)="getStaus()" dataType="string" styleClass="w-100"/>
+            <label for="endDate" class="ms-0">End Date</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.end" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+</div></form>

@@ -1,0 +1,56 @@
+<div class="container">
+    <div class="row">
+        <span class="label">{{heading}}</span>
+        <div class="d-flex flex-column">
+            <p-autoComplete styleClass="autocomplete"
+            [(ngModel)]="selectedAccount"
+            [suggestions]="filteredAccount"
+            (completeMethod)="autoCompleteSearch($event)"
+            optionLabel="email"
+            (onSelect)="loadUserDetails($event)"
+            >
+            <ng-template let-user pTemplate="item">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex flex-row flex-nowrap">
+                        <div>
+                            <p-avatar [label]="getInitials(user.fullName)" [styleClass]="'text-white mr-2 status-'+user.status" size="large" shape="circle" />
+                        </div>
+                        <div class="d-flex flex-column flex-nowrap ms-1">
+                            <div [innerHTML]="user.fullName | highlight : toHighlight"></div>
+                            <div [innerHTML]="user.email | highlight : toHighlight"></div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </ng-template>
+            </p-autoComplete>
+        </div>
+    </div>
+    <div class="row" *ngIf="detailsLoaded">
+        <form [formGroup]="sstFormGroup" (ngSubmit)="onSubmit()">
+        <div class="d-flex flex-column">
+            <div class="d-flex flex-row flex-wrap justify-content-between">
+                <div class="w-25 p-2">
+                    <app-personal-data></app-personal-data>
+                </div>
+                <div class="w-25 p-2">
+                    <app-line-management></app-line-management> 
+                </div>
+                <div class="w-25 p-2">
+                    <app-business-unit></app-business-unit>
+                </div>
+                <div class="w-25 p-2">
+                    <app-status></app-status>
+                </div>
+            </div>
+            <div><button type="submit" class="btn btn-primary">Submit</button>
+                <button (click)="cancel()" class="btn btn-danger ms-2">Cancel</button>
+            </div>
+        </div>
+    </form>
+    </div>
+
+</div>
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <p-progressSpinner ariaLabel="loading" />
+</div>

@@ -1,0 +1,56 @@
+<div class="d-flex justify-content-center flex-column" formGroupName="personalDataFormGroup">
+    <span class="section-head">Personal Data</span>
+    <div class="d-flex flex-row mt-4">
+        <p-inputSwitch name="extFlag" formControlName="externalFlag" trueValue="yes" falseValue="no"/>
+        <label for="extFlag" class="switch-label">External Flag</label>
+        <i class="bi bi-info-circle-fill m-auto me-0" [pTooltip]="tooltip.externalFlag" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="name" type="text" pInputText formControlName="emailAddress" class="form-input" />
+            <label for="name">E-Mail</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.email" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="cwid" type="text" pInputText formControlName="cwid" class="form-input" />
+            <label for="cwid">CWID</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.cwid" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete form-autocomplete" name="company" formControlName="company" [suggestions]="companySuggestion" (completeMethod)="searchCompany($event)">
+                <ng-template let-company pTemplate="item">
+                    <div class="flex align-items-center gap-2">
+                        <div [innerHTML]="company | highlight : companyHighlight"></div>
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="company">Company</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.company" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <input id="hoursWeek" type="text" pInputText formControlName="hoursWeek" class="form-input" />
+            <label for="hoursWeek">Hours per week</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.hour" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+    <div class="d-flex flex-row">
+        <p-floatLabel class="mt-4 w-100">
+            <p-autoComplete styleClass="autocomplete autocomplete w-100" name="role" formControlName="roles" [suggestions]="roleSuggestion" (completeMethod)="searchRole($event)" (onSelect)="roleSelected($event)" [multiple]="true" placeholder="Add Role here">
+                <ng-template let-role pTemplate="item">
+                    <div class="flex align-items-center gap-2">
+                        <div [innerHTML]="role | highlight : roleHighlight"></div>
+                    </div>
+                </ng-template>
+            </p-autoComplete>
+            <label for="role">Roles</label>
+        </p-floatLabel>
+        <i class="bi bi-info-circle-fill m-auto" [pTooltip]="tooltip.role" tooltipStyleClass="w-custom" tooltipPosition="bottom" escape="false"></i>
+    </div>
+</div>
+

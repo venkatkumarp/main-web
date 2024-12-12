@@ -1,0 +1,52 @@
+<header class="py-3 mb-3 border-bottom shadow">
+    <div class="container-fluid d-flex flex-row flex-nowrap justify-content-between" >
+        <div class="d-flex flex-row flex-nowrap align-items-center">
+            <a (click)="sidebarVisible = true;">
+                <i class="bi bi-list menu"  (keypress.enter)="sidebarVisible = true;"></i>
+            </a>
+            <h5 class="ms-1 mb-0">Welcome {{user?.fullname}}</h5>
+        </div>
+        <div class="">
+            <div class="">
+                <img
+                    src="assets/bayer_logo.png"
+                    alt="mdo"
+                    class="logo"
+                /> 
+            </div>
+        </div>
+    </div>
+</header>
+<p-sidebar [(visible)]="sidebarVisible" styleClass="sidebar" appendTo="body" showCloseIcon="false">
+    <ng-template pTemplate="headless">
+        <div class="sidebarBody">
+        <p-card styleClass="profile">
+            <p-avatar icon="bi bi-person" styleClass="mr-2" size="large" shape="circle" />
+            <p class="m-0">{{user?.email}}</p>
+            <p class="m-0">{{user?.cwid}}</p>
+            <p class="m-0">
+              <ng-container *ngFor="let role of user?.roles">
+                <p-tag [value]="role" styleClass="m-1 roleTag" />
+              </ng-container>   
+            </p>
+        </p-card>
+        <a class="no-decoration" (click)="navigate('/sst')" *ngIf="('/sst' != currentURL) && accessPermission.canAccess(accessPermission.taskList.read.sst)">
+            <div class="navigate" >
+                SST
+            </div>
+        </a>
+        <a class="no-decoration" (click)="navigate('/bulkupload')" *ngIf="('/bulkupload' != currentURL) && accessPermission.canAccess(accessPermission.taskList.read.bulkUpload)">
+            <div class="navigate" >
+                Bulk Upload
+            </div>
+        </a>
+        <a class="no-decoration" (click)="navigate('/xpwd')" *ngIf="('/xpwd' != currentURL) && accessPermission.canAccess(accessPermission.taskList.read.xpwd)">
+            <div class="navigate">
+                XPWD
+            </div>
+        </a>
+        
+        
+    </div>
+    </ng-template>
+</p-sidebar>

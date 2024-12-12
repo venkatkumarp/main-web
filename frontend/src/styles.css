@@ -1,0 +1,44 @@
+/* You can add global styles to this file, and also import other style files */
+*{
+    font-size: 0.9rem;
+}
+.profile .p-card-content {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.roleTag .p-tag-value{
+    font-size: 0.65rem;
+}
+
+.sidebar{
+    background: #e5e7eb;
+}
+.sidebarBody{
+    padding: .5rem;
+}
+.navigate{
+    background: white;
+    margin-top: 10px;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    border: #96979b solid 0.1rem;
+    color: black !important;
+    
+}
+
+.navigate:hover{
+    background: #3b82f6;
+    color: white !important;
+    font-weight: 500;
+}
+
+a.no-decoration{
+    text-decoration: none !important;
+}
+
