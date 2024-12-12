@@ -51,10 +51,10 @@ variable "redirectUri" {
   type        = string
 }
 
-variable "client_secret" {
-  description = "Client Secret"
-  type        = string
-}
+#variable "client_secret" {
+#  description = "Client Secret"
+#  type        = string
+#}
 
 variable "code_verifier" {
   description = "Code Verifier"
