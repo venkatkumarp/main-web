@@ -97,7 +97,7 @@ jobs:
     name: Build and Deploy Backend
     needs: check_changes
     if: needs.check_changes.outputs.output1 == './backend'
-    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    uses: venkatkumarp/main-workflows/.github/workflows/terraform-deploy.yml@main
     with:
       environment: ${{ inputs.environment }}
       plan_only: ${{ inputs.plan_only }}
@@ -110,13 +110,13 @@ jobs:
       org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
       aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
       tf_env_vars: |
-        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
+        echo TF_VAR_aws_account_id="440744244651" >> $GITHUB_ENV
 
   deploy_frontend:
     name: Deploy Frontend
     needs: check_changes
     if: needs.check_changes.outputs.output1 == './frontend'
-    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    uses: venkatkumarp/main-workflows/.github/workflows/terraform-deploy.yml@main
     with:
       environment: dev
       plan_only: ${{ inputs.plan_only }}
@@ -129,4 +129,4 @@ jobs:
       org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
       aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
       tf_env_vars: |
-        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
+        echo TF_VAR_aws_account_id="440744244651" >> $GITHUB_ENV
