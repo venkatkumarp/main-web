@@ -66,11 +66,11 @@ locals {
   environment_suffix = lookup(local.suffixes, var.aws_account_id, "")
 
   environments = {
-    "590183961751" = "dev"
+    "440744244651" = "dev"
   }
 
   suffixes = {
-    "590183961751" = "dev"
+    "440744244651" = "dev"
   }
 
   aws_region = "eu-central-1"
@@ -79,7 +79,7 @@ locals {
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
   bucket_names = {
-    "590183961751" = "sandbox-test-frontend"
+    "440744244651" = "web.dev.times-tracking.int.venkat.com"
   }
   bucket_name = lookup(local.bucket_names, var.aws_account_id, "invalid-bucket")
 
