@@ -1,0 +1,132 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+      plan_only:
+        description: "Run Terraform plan only"
+        required: false
+        default: true
+        type: boolean
+      destroy:
+        description: "Run Terraform destroy"
+        required: false
+        default: false
+        type: boolean
+permissions:
+  id-token: write
+  contents: read
+  
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check_changes:
+    name: Determine Working Directory 
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.set_dir.outputs.working_dir }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Identify Modified Directory
+        id: set_dir
+        run: |
+            if [ -z "${{ github.event.before }}" ]; then
+              commit_range="HEAD~1"
+            else
+              commit_range="${{ github.event.before }}"
+            fi
+
+            # Fetch changed files between the previous commit (or HEAD~1) and the current commit
+            changed_files=$(git diff --name-only "$commit_range" "${{ github.sha }}")
+
+            # Debug output
+            echo "Changed files:"
+            echo "$changed_files"
+
+            # Initialize flags
+            backend_changes=false
+            frontend_changes=false
+
+            # Check for backend changes
+            if echo "$changed_files" | grep -q '^backend/'; then
+              backend_changes=true
+              echo "Backend changes detected"
+            fi
+
+            # Check for frontend changes
+            if echo "$changed_files" | grep -q '^frontend/'; then
+              frontend_changes=true
+              echo "Frontend changes detected"
+            fi
+
+            # Set the working directory based on changes
+            if [ "$backend_changes" = true ]; then
+              echo "working_dir=./backend" >> "$GITHUB_OUTPUT"
+              echo "Setting working directory to ./backend"
+            fi
+
+            if [ "$frontend_changes" = true ]; then
+              echo "working_dir=./frontend" >> "$GITHUB_OUTPUT"
+              echo "Setting working directory to ./frontend"
+            fi
+
+            # If neither backend nor frontend changes are detected, exit with a message
+            if [ "$backend_changes" = false ] && [ "$frontend_changes" = false ]; then
+              echo "No relevant changes detected in backend or frontend directories"
+              exit 0
+            fi
+  deploy_backend:
+    name: Build and Deploy Backend
+    needs: check_changes
+    if: needs.check_changes.outputs.output1 == './backend'
+    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    with:
+      environment: ${{ inputs.environment }}
+      plan_only: ${{ inputs.plan_only }}
+      destroy: ${{ inputs.destroy }}
+      working_dir: ./backend
+      backend_config_path: ./tf_backend/${{ inputs.environment }}.tfbackend
+      backend_key: backend/build/${{ inputs.environment }}/backend/build.tfstate
+
+    secrets:
+      org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
+      aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
+      tf_env_vars: |
+        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
+
+  deploy_frontend:
+    name: Deploy Frontend
+    needs: check_changes
+    if: needs.check_changes.outputs.output1 == './frontend'
+    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/terraform-deploy.yml@main
+    with:
+      environment: dev
+      plan_only: ${{ inputs.plan_only }}
+      destroy: ${{ inputs.destroy }}
+      working_dir: ./frontend
+      backend_config_path: ./tf_backend/${{ inputs.environment }}.tfbackend
+      backend_key: frontend/build/${{ inputs.environment }}/frontend/build.tfstate
+
+    secrets:
+      org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
+      aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
+      tf_env_vars: |
+        echo TF_VAR_aws_account_id="590183961751" >> $GITHUB_ENV
