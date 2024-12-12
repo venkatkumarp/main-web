@@ -71,7 +71,6 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
       CDN_URL         = var.cdnurl
       TENANT_ID       = var.tenantId
       REDIRECT_URI    = var.redirectUri
-      CLIENT_SECRET   = var.client_secret
       CODE_VERIFIER   = var.code_verifier
       CODE_CHALLENGE  = var.code_challenge
       CODE_CHALLENGE_METHOD = var.code_challenge_method
