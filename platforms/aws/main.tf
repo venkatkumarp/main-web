@@ -57,7 +57,7 @@ module "lambda_gettoken" {
   cdnurl       = module.secrets_manager.secret_values["cdnurl"]
   tenantId     = module.secrets_manager.secret_values["tenantId"]
   redirectUri  = module.secrets_manager.secret_values["redirectUri"]
-  client_secret = module.secrets_manager.secret_values["client_secret"]
+  #client_secret = module.secrets_manager.secret_values["client_secret"]
   code_verifier = module.secrets_manager.secret_values["code_verifier"]
   code_challenge = module.secrets_manager.secret_values["code_challenge"]
   code_challenge_method = module.secrets_manager.secret_values["code_challenge_method"]
