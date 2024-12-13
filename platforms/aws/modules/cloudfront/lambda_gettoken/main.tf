@@ -55,7 +55,7 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
   runtime       = "python3.12"
   role          = aws_iam_role.gettoken_lambda_role.arn
   handler       = "point-handler.point_handler"
-  filename      = data.archive_file.lambda_zip.output_path
+  #filename      = data.archive_file.lambda_zip.output_path
   s3_bucket     = var.s3_bucket_name
   s3_key        = "tt_backend.zip"
   publish       = true
