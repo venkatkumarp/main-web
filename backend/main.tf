@@ -1,9 +1,3 @@
-
-##########
-########
-########
-
-
 ###############################################
 ##                                           ##
 ##  Variables Definition                     ##
@@ -33,7 +27,6 @@ terraform {
   }
 }
 
-############
 locals {
   default_tags = {
     ProjectName = local.project_name
