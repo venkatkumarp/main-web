@@ -1,6 +1,5 @@
 ###############################################
-## 
-                                          ##
+##                                           ##
 ##  Variables Definition                     ##
 ##                                           ##
 ###############################################
@@ -8,6 +7,7 @@
 variable "aws_account_id" {
   type        = string
   description = "Account ID AWS"
+
 }
 
 ###############################################
@@ -28,8 +28,6 @@ terraform {
   }
 }
 
-
-##########
 locals {
   default_tags = {
     ProjectName = local.project_name
