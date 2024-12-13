@@ -1,0 +1,107 @@
+name: "Sonar: SonarQube Web"
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      # Exclude changes in specific files or directories
+      - '!**/README.md'
+      - '!**/CODEOWNERS'
+      - '!**/.devcontainer/**'
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      # Exclude changes in specific files or directories
+      - '!**/README.md'
+      - '!**/CODEOWNERS'
+      - '!**/.devcontainer/**'
+
+permissions:
+  id-token: write
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  determine-working-directory:
+    name: Determine Working Directory
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.set_dir.outputs.working_dir }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+         
+      - name: Identify Modified Directory
+        id: set_dir
+        run: |
+            if [ -z "${{ github.event.before }}" ]; then
+              commit_range="HEAD~1"
+            else
+              commit_range="${{ github.event.before }}"
+            fi
+
+            # Fetch changed files between the previous commit (or HEAD~1) and the current commit
+            changed_files=$(git diff --name-only "$commit_range" "${{ github.sha }}")
+
+            # Debug output
+            echo "Changed files:"
+            echo "$changed_files"
+
+            # Initialize flags
+            backend_changes=false
+            frontend_changes=false
+
+            # Check for backend changes
+            if echo "$changed_files" | grep -q '^backend/'; then
+              backend_changes=true
+              echo "Backend changes detected"
+            fi
+
+            # Check for frontend changes
+            if echo "$changed_files" | grep -q '^frontend/'; then
+              frontend_changes=true
+              echo "Frontend changes detected"
+            fi
+
+            # Set the working directory based on changes
+            if [ "$backend_changes" = true ]; then
+              echo "working_dir=./backend" >> "$GITHUB_OUTPUT"
+              echo "Setting working directory to ./backend"
+            fi
+
+            if [ "$frontend_changes" = true ]; then
+              echo "working_dir=./frontend" >> "$GITHUB_OUTPUT"
+              echo "Setting working directory to ./frontend"
+            fi
+
+            # If neither backend nor frontend changes are detected, exit with a message
+            if [ "$backend_changes" = false ] && [ "$frontend_changes" = false ]; then
+              echo "No relevant changes detected in backend or frontend directories"
+              exit 0
+            fi
+
+  sonar-quality-scan:
+    needs: determine-working-directory
+    name: Execute SonarQube Scan
+    if: needs.determine-working-directory.outputs.output1 != ''
+    uses: bayer-int/ph-rd-time-tracking-workflows/.github/workflows/sonar-quality-scan.yml@FTR/sonarscan-fix
+    with:
+      environment: dev
+      working_dir: ${{ needs.determine-working-directory.outputs.output1 }}
+    secrets:
+      SONAR_TOKEN_TERRAFORM: ${{ secrets.SONAR_TOKEN_TERRAFORM }}
+      SONAR_TOKEN_BACKEND: ${{ secrets.SONAR_TOKEN_BACKEND }}
+      SONAR_TOKEN_FRONTEND: ${{ secrets.SONAR_TOKEN_FRONTEND }}
