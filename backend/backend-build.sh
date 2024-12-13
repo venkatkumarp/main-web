@@ -45,9 +45,14 @@ fi
 # Create temporary copy of backend folder
 cp -r "$backend_folder" "$temp_dir/backend"
 
+# Remove specified files
+rm -f "$temp_dir/backend/main.tf" \
+      "$temp_dir/backend/sonar-project.properties" \
+      "$temp_dir/backend/backend-build.sh"
+
 # Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend >&2; then
+if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh >&2; then
     error_exit "Failed to create ZIP file"
 fi
 
