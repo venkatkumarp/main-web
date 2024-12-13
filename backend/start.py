@@ -14,7 +14,7 @@ app = FastAPI(
 Time Tracking Application helps build financial assessments 📚.
 
 ## Authentication 🔒️
-
+###############
 
 First authenticate to use APIs.
 
