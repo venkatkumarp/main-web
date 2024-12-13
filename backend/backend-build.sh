@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Check for required commands
+## Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
 
@@ -37,9 +37,9 @@ trap 'rm -rf "$temp_dir"' EXIT
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Check for backend folder
-backend_folder="$script_dir/backend"
+backend_folder="$(dirname "$script_dir")/backend"
 if [ ! -d "$backend_folder" ]; then
-    error_exit "No 'backend' folder found in the script directory"
+    error_exit "No 'backend' folder found"
 fi
 
 # Create temporary copy of backend folder
@@ -68,7 +68,7 @@ version_id=$(aws s3api head-object \
 
 # Get list of packaged files
 packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
-packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//') 
+packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
 # Output final JSON result
 echo "{
