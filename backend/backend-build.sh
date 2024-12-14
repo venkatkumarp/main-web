@@ -33,26 +33,36 @@ temp_dir=$(mktemp -d)
 trap 'rm -rf "$temp_dir"' EXIT
 # Get the directory where the script is located
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Check for API and Backend folders
+# Determine exact paths for API and Backend folders
 api_folder="$script_dir/api"
-backend_folder="$(dirname "$script_dir")/backend"
+backend_folder="$script_dir"
+# Validate folders exist
 if [ ! -d "$api_folder" ]; then
     error_exit "No 'api' folder found for Lambda layer"
 fi
 if [ ! -d "$backend_folder" ]; then
-    error_exit "No 'backend' folder found for Lambda function"
+    error_exit "No backend folder found for Lambda function"
 fi
 # Create temporary copies
-cp -r "$api_folder" "$temp_dir/api"
-cp -r "$backend_folder" "$temp_dir/backend"
-# Create ZIP file for Lambda Layer (API folder)
-cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path_layer" api >&2; then
+mkdir -p "$temp_dir/lambda_layer"
+mkdir -p "$temp_dir/lambda_function"
+cp -r "$api_folder"/* "$temp_dir/lambda_layer/"
+# Copy backend files, excluding specific directories and files
+rsync -av \
+    --exclude '.git/' \
+    --exclude '.terraform/' \
+    --exclude 'api/' \
+    --exclude '*.tfstate' \
+    --exclude '*.tfbackend' \
+    "$backend_folder"/ "$temp_dir/lambda_function"/
+# Create ZIP file for Lambda Layer (API folder contents)
+cd "$temp_dir/lambda_layer" || error_exit "Failed to change to lambda layer directory"
+if ! zip -r "$output_path_layer" . >&2; then
     error_exit "Failed to create Lambda Layer ZIP file"
 fi
-# Create ZIP file for Lambda Function (Backend folder, excluding API folder)
-cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
-if ! zip -r "$output_path_function" . -x "*/api/*" >&2; then
+# Create ZIP file for Lambda Function (Backend folder contents, excluding API)
+cd "$temp_dir/lambda_function" || error_exit "Failed to change to lambda function directory"
+if ! zip -r "$output_path_function" . >&2; then
     error_exit "Failed to create Lambda Function ZIP file"
 fi
 # Upload Lambda Layer to S3
@@ -79,6 +89,6 @@ echo "{
     \"layer_s3_key\": \"tt_lambda_layer.zip\",
     \"function_s3_key\": \"tt_lambda_function.zip\",
     \"environment\": \"$env\",
-    \"layer_packaged_count\": \"$(find "$temp_dir/api" -type f | wc -l)\",
-    \"function_packaged_count\": \"$(find "$temp_dir/backend" -type f | wc -l)\"
+    \"layer_packaged_count\": \"$(find "$temp_dir/lambda_layer" -type f | wc -l)\",
+    \"function_packaged_count\": \"$(find "$temp_dir/lambda_function" -type f | wc -l)\"
 }"
