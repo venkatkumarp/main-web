@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-## Check for required commands
+# Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
 
