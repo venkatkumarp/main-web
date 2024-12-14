@@ -52,7 +52,7 @@ cp -r "$backend_folder" "$temp_dir/backend"
 
 # Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* >&2; then
+if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev* >&2; then
     error_exit "Failed to create ZIP file"
 fi
 
