@@ -1,115 +1,120 @@
 #!/bin/bash
+# Lambda Packaging and S3 Upload Script
+# Robust error handling and packaging for AWS Lambda deployments
+
+# Strict error handling
 set -euo pipefail
 
-# Check for required commands
-command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
-command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
+# Enable debugging (comment out in production)
+# set -x
 
-# Load JSON input using jq
-input_data=$(cat)
-env=$(echo "$input_data" | jq -r '.environment // empty')
-bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
-output_path_layer=$(echo "$input_data" | jq -r '.output_path_layer // empty')
-output_path_function=$(echo "$input_data" | jq -r '.output_path_function // empty')
-
-# Function for error handling that outputs valid JSON
+# Function for robust error handling with JSON output
 error_exit() {
-    escaped_error=$(echo "$1" | jq -R .)
-    echo "{\"error\": ${escaped_error}}" >&2
+    local error_message="$1"
+    local escaped_error=$(echo "$error_message" | jq -R .)
+    echo "{\"error\": ${escaped_error}, \"status\": \"failed\"}" >&2
     exit 1
 }
 
-# Check for required input variables
-if [ -z "$env" ]; then
-    error_exit "environment variable is not set in the input data."
-fi
-if [ -z "$bucket_name" ]; then
-    error_exit "bucket_name variable is not set in the input data."
-fi
-if [ -z "$output_path_layer" ]; then
-    error_exit "output_path_layer variable is not set in the input data."
-fi
-if [ -z "$output_path_function" ]; then
-    error_exit "output_path_function variable is not set in the input data."
-fi
+# Function to validate command availability
+validate_commands() {
+    local commands=("jq" "aws" "zip")
+    for cmd in "${commands[@]}"; do
+        command -v "$cmd" >/dev/null 2>&1 || {
+            error_exit "$cmd is not installed. Please install before proceeding."
+        }
+    done
+}
 
-# Create temporary directory
-temp_dir=$(mktemp -d)
-trap 'rm -rf "$temp_dir"' EXIT
+# Main packaging and upload script
+main() {
+    # Validate required commands
+    validate_commands
 
-# Get the directory where the script is located
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # Load JSON input using jq
+    input_data=$(cat)
+    
+    # Extract input parameters with validation
+    env=$(echo "$input_data" | jq -r '.environment // empty')
+    bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
+    output_path_layer=$(echo "$input_data" | jq -r '.output_path_layer // empty')
+    output_path_function=$(echo "$input_data" | jq -r '.output_path_function // empty')
 
-# Check for API and Backend folders
-api_folder="$script_dir/api"
-backend_folder="$(dirname "$script_dir")/backend"
-if [ ! -d "$api_folder" ]; then
-    error_exit "No 'api' folder found for Lambda layer"
-fi
-if [ ! -d "$backend_folder" ]; then
-    error_exit "No 'backend' folder found for Lambda function"
-fi
+    # Validate input parameters
+    [[ -z "$env" ]] && error_exit "Environment not specified"
+    [[ -z "$bucket_name" ]] && error_exit "S3 Bucket name not specified"
+    [[ -z "$output_path_layer" ]] && error_exit "Layer output path not specified"
+    [[ -z "$output_path_function" ]] && error_exit "Function output path not specified"
 
-# Create temporary copies
-cp -r "$api_folder" "$temp_dir/api"
-cp -r "$backend_folder" "$temp_dir/backend"
+    # Create temporary working directory
+    temp_dir=$(mktemp -d) || error_exit "Failed to create temporary directory"
+    trap 'rm -rf "$temp_dir"' EXIT
 
-# Create exclusion list for backend function ZIP
-exclusion_list=(
-    "main.tf"
-    "dev.tfbackend"
-    "export-deps.sh"
-    "backend-build.sh"
-    "*.log"
-    "*.tmp"
-    "node_modules/*"
-    "*.terraform/*"
-    ".git/*"
-    "*.env"
-)
+    # Get script and source directory paths
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    api_folder="$script_dir/api"
+    backend_folder="$(dirname "$script_dir")/backend"
 
-# Create ZIP file for Lambda Layer (API folder)
-cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path_layer" api >&2; then
-    error_exit "Failed to create Lambda Layer ZIP file"
-fi
+    # Validate source folders
+    [[ ! -d "$api_folder" ]] && error_exit "API folder not found: $api_folder"
+    [[ ! -d "$backend_folder" ]] && error_exit "Backend folder not found: $backend_folder"
 
-# Create ZIP file for Lambda Function (Backend folder) with exclusions
-cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
-# Create exclude file
-exclude_file="$temp_dir/exclude_list.txt"
-printf "%s\n" "${exclusion_list[@]}" > "$exclude_file"
-if ! zip -r "$output_path_function" . -x@"$exclude_file" >&2; then
-    error_exit "Failed to create Lambda Function ZIP file"
-fi
+    # Create temporary copies
+    cp -r "$api_folder" "$temp_dir/api"
+    cp -r "$backend_folder" "$temp_dir/backend"
 
-# Upload Lambda Layer to S3
-cd "$temp_dir" || error_exit "Failed to change back to temp directory"
-if aws s3 cp "$output_path_layer" "s3://$bucket_name/tt_lambda_layer.zip" \
-    --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded Lambda Layer package to S3 as tt_lambda_layer.zip" >&2
-else
-    error_exit "Failed to upload Lambda Layer package to S3"
-fi
+    # Exclusion list for backend function ZIP
+    exclusion_list=(
+        "*.tfstate"
+        ".terraform/*"
+        "*.log"
+        "*.tmp"
+        "node_modules/*"
+        ".git/*"
+        "*.env"
+        "main.tf"
+        "*.tfbackend"
+        "export-deps.sh"
+        "backend-build.sh"
+    )
 
-# Upload Lambda Function to S3
-if aws s3 cp "$output_path_function" "s3://$bucket_name/tt_lambda_function.zip" \
-    --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded Lambda Function package to S3 as tt_lambda_function.zip" >&2
-else
-    error_exit "Failed to upload Lambda Function package to S3"
-fi
+    # Create exclude file
+    exclude_file="$temp_dir/exclude_list.txt"
+    printf "%s\n" "${exclusion_list[@]}" > "$exclude_file"
 
-# Prepare JSON output for Terraform
-echo "{
-    \"bucket\": \"$bucket_name\",
-    \"s3_key\": \"tt_lambda_function.zip\",
-    \"version_id\": \"$(date +%s)\",
-    \"status\": \"success\",
-    \"message\": \"Lambda Layer and Function packages created and uploaded to S3\",
-    \"layer_s3_key\": \"tt_lambda_layer.zip\",
-    \"function_s3_key\": \"tt_lambda_function.zip\",
-    \"environment\": \"$env\",
-    \"layer_packaged_count\": \"$(find "$temp_dir/api" -type f | wc -l)\",
-    \"function_packaged_count\": \"$(find "$temp_dir/backend" -type f | wc -l)\"
-}"
+    # ZIP Lambda Layer (API folder)
+    cd "$temp_dir" || error_exit "Failed to change to temp directory"
+    zip -r "$output_path_layer" api >&2 || error_exit "Failed to create Lambda Layer ZIP"
+
+    # ZIP Lambda Function (Backend folder)
+    cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
+    zip -r "$output_path_function" . -x@"$exclude_file" >&2 || error_exit "Failed to create Lambda Function ZIP"
+
+    # Verify ZIP files were created
+    [[ ! -f "$output_path_layer" ]] && error_exit "Lambda Layer ZIP not created"
+    [[ ! -f "$output_path_function" ]] && error_exit "Lambda Function ZIP not created"
+
+    # Upload Lambda Layer to S3
+    aws s3 cp "$output_path_layer" "s3://$bucket_name/tt_lambda_layer.zip" \
+        --metadata "environment=$env" >&2 || error_exit "Failed to upload Lambda Layer to S3"
+
+    # Upload Lambda Function to S3
+    aws s3 cp "$output_path_function" "s3://$bucket_name/tt_lambda_function.zip" \
+        --metadata "environment=$env" >&2 || error_exit "Failed to upload Lambda Function to S3"
+
+    # Prepare JSON output for Terraform
+    layer_file_count=$(find "$temp_dir/api" -type f | wc -l)
+    function_file_count=$(find "$temp_dir/backend" -type f | wc -l)
+
+    echo "{
+        \"bucket\": \"$bucket_name\",
+        \"s3_key\": \"tt_lambda_function.zip\",
+        \"layer_s3_key\": \"tt_lambda_layer.zip\",
+        \"version_id\": \"$(date +%s)\",
+        \"status\": \"success\",
+        \"message\": \"Lambda Layer and Function packages created and uploaded to S3\",
+        \"environment\": \"$env\",
+        \"layer_packaged_count\": \"$layer_file_count\",
+        \"function_packaged_count\": \"$function_file_count\"
+    }"
+}
