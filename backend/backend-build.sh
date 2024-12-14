@@ -50,8 +50,9 @@ cd "$temp_dir" || error_exit "Failed to change to temporary directory"
 if ! zip -r "$output_path_layer" api >&2; then
     error_exit "Failed to create Lambda Layer ZIP file"
 fi
-# Create ZIP file for Lambda Function (Backend folder)
-if ! zip -r "$output_path_function" backend >&2; then
+# Create ZIP file for Lambda Function (Backend folder, excluding API folder)
+cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
+if ! zip -r "$output_path_function" . -x "*/api/*" >&2; then
     error_exit "Failed to create Lambda Function ZIP file"
 fi
 # Upload Lambda Layer to S3
