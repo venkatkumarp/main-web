@@ -15,7 +15,7 @@ output_path_function=$(echo "$input_data" | jq -r '.output_path_function // empt
 # Function for error handling that outputs valid JSON
 error_exit() {
     escaped_error=$(echo "$1" | jq -R .)
-    echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
+    echo "{\"error\": ${escaped_error}}" >&2
     exit 1
 }
 
@@ -57,6 +57,7 @@ cp -r "$backend_folder" "$temp_dir/backend"
 
 # Create ZIP file for Lambda Layer (API folder)
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
+
 if ! zip -r "$output_path_layer" api >&2; then
     error_exit "Failed to create Lambda Layer ZIP file"
 fi
@@ -82,28 +83,12 @@ else
     error_exit "Failed to upload Lambda Function package to S3"
 fi
 
-# Get list of packaged files for Layer
-layer_files=($(find "$temp_dir/api" -type f -printf "%P\n"))
-layer_files_string=$(printf '%s,' "${layer_files[@]}" | sed 's/,$//')
-
-# Get list of packaged files for Function
-function_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
-function_files_string=$(printf '%s,' "${function_files[@]}" | sed 's/,$//')
-
-# Output final JSON result
+# Prepare JSON output for Terraform
 echo "{
-    \"status\": \"success\",
-    \"message\": \"Lambda Layer and Function packages created and uploaded to S3\",
-    \"environment\": \"$env\",
     \"bucket\": \"$bucket_name\",
-    \"layer\": {
-        \"s3_key\": \"tt_lambda_layer.zip\",
-        \"packaged_count\": \"${#layer_files[@]}\",
-        \"packaged_files\": \"$layer_files_string\"
-    },
-    \"function\": {
-        \"s3_key\": \"tt_lambda_function.zip\",
-        \"packaged_count\": \"${#function_files[@]}\",
-        \"packaged_files\": \"$function_files_string\"
-    }
+    \"layer_s3_key\": \"tt_lambda_layer.zip\",
+    \"function_s3_key\": \"tt_lambda_function.zip\",
+    \"environment\": \"$env\",
+    \"layer_packaged_count\": \"$(find "$temp_dir/api" -type f | wc -l)\",
+    \"function_packaged_count\": \"$(find "$temp_dir/backend" -type f | wc -l)\"
 }"
