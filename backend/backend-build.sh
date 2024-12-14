@@ -56,9 +56,9 @@ cp -r "$api_folder" "$temp_dir/api"
 cp -r "$backend_folder" "$temp_dir/backend"
 
 # Remove specified files from backend
-rm -f "$temp_dir/backend/main.tf" \
-      "$temp_dir/backend/sonar-project.properties" \
-      "$temp_dir/backend/backend-build.sh"
+#rm -f "$temp_dir/backend/main.tf" \
+#      "$temp_dir/backend/sonar-project.properties" \
+#      "$temp_dir/backend/backend-build.sh"
 
 # Create ZIP file for Lambda Layer (API folder)
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
@@ -68,7 +68,7 @@ fi
 
 # Create ZIP file for Lambda Function (Backend folder)
 # Exclude Terraform, sonar, and build script files
-if ! zip -r "$output_path_function" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*api\* >&2; then
+if ! zip -r "$output_path_function" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*dev.tfbackend \*export-deps.sh \*api\* >&2; then
     error_exit "Failed to create Lambda Function ZIP file"
 fi
 
