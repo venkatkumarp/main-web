@@ -43,6 +43,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Check for API and Backend folders
 api_folder="$script_dir/api"
 backend_folder="$(dirname "$script_dir")/backend"
+
 if [ ! -d "$api_folder" ]; then
     error_exit "No 'api' folder found for Lambda layer"
 fi
@@ -54,22 +55,20 @@ fi
 cp -r "$api_folder" "$temp_dir/api"
 cp -r "$backend_folder" "$temp_dir/backend"
 
-# Remove specified files from the temporary directories
+# Remove specified files from backend
 rm -f "$temp_dir/backend/main.tf" \
       "$temp_dir/backend/sonar-project.properties" \
       "$temp_dir/backend/backend-build.sh"
 
-rm -f "$temp_dir/api/some-unwanted-file" \
-      "$temp_dir/api/another-unwanted-file"
-
 # Create ZIP file for Lambda Layer (API folder)
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path_layer" api -x \*some-unwanted-file \*another-unwanted-file >&2; then
+if ! zip -r "$output_path_layer" api >&2; then
     error_exit "Failed to create Lambda Layer ZIP file"
 fi
 
 # Create ZIP file for Lambda Function (Backend folder)
-if ! zip -r "$output_path_function" backend -x \*.tf \*sonar-project.properties \*backend-build.sh >&2; then
+# Exclude Terraform, sonar, and build script files
+if ! zip -r "$output_path_function" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*api\* >&2; then
     error_exit "Failed to create Lambda Function ZIP file"
 fi
 
