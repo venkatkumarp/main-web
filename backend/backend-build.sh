@@ -45,30 +45,15 @@ fi
 # Create temporary copies
 cp -r "$api_folder" "$temp_dir/api"
 cp -r "$backend_folder" "$temp_dir/backend"
-
-# Create exclusion list for backend function ZIP
-exclusion_list=(
-    ".terraform/*"
-    "main.tf"
-    "api/*"  # Exclude api folder
-)
-
-# Create exclude file
-exclude_file="$temp_dir/exclude_list.txt"
-printf "%s\n" "${exclusion_list[@]}" > "$exclude_file"
-
 # Create ZIP file for Lambda Layer (API folder)
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
 if ! zip -r "$output_path_layer" api >&2; then
     error_exit "Failed to create Lambda Layer ZIP file"
 fi
-
-# Create ZIP file for Lambda Function (Backend folder) with exclusions
-cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
-if ! zip -r "$output_path_function" . -x@"$exclude_file" >&2; then
+# Create ZIP file for Lambda Function (Backend folder)
+if ! zip -r "$output_path_function" backend >&2; then
     error_exit "Failed to create Lambda Function ZIP file"
 fi
-
 # Upload Lambda Layer to S3
 if aws s3 cp "$output_path_layer" "s3://$bucket_name/tt_lambda_layer.zip" \
     --metadata "environment=$env" >&2; then
@@ -76,7 +61,6 @@ if aws s3 cp "$output_path_layer" "s3://$bucket_name/tt_lambda_layer.zip" \
 else
     error_exit "Failed to upload Lambda Layer package to S3"
 fi
-
 # Upload Lambda Function to S3
 if aws s3 cp "$output_path_function" "s3://$bucket_name/tt_lambda_function.zip" \
     --metadata "environment=$env" >&2; then
@@ -84,7 +68,6 @@ if aws s3 cp "$output_path_function" "s3://$bucket_name/tt_lambda_function.zip" 
 else
     error_exit "Failed to upload Lambda Function package to S3"
 fi
-
 # Prepare JSON output for Terraform
 echo "{
     \"bucket\": \"$bucket_name\",
