@@ -43,7 +43,6 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Check for API and Backend folders
 api_folder="$script_dir/api"
 backend_folder="$(dirname "$script_dir")/backend"
-
 if [ ! -d "$api_folder" ]; then
     error_exit "No 'api' folder found for Lambda layer"
 fi
@@ -61,22 +60,25 @@ exclusion_list=(
     "dev.tfbackend"
     "export-deps.sh"
     "backend-build.sh"
+    "*.log"
+    "*.tmp"
+    "node_modules/*"
+    "*.terraform/*"
+    ".git/*"
+    "*.env"
 )
 
 # Create ZIP file for Lambda Layer (API folder)
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-
 if ! zip -r "$output_path_layer" api >&2; then
     error_exit "Failed to create Lambda Layer ZIP file"
 fi
 
 # Create ZIP file for Lambda Function (Backend folder) with exclusions
 cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
-
 # Create exclude file
 exclude_file="$temp_dir/exclude_list.txt"
 printf "%s\n" "${exclusion_list[@]}" > "$exclude_file"
-
 if ! zip -r "$output_path_function" . -x@"$exclude_file" >&2; then
     error_exit "Failed to create Lambda Function ZIP file"
 fi
