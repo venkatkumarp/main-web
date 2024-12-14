@@ -101,7 +101,9 @@ data "external" "backend_package" {
   query = {
     environment = local.environment
     bucket_name = local.bucket_name
-    output_path = "${path.module}/backend.zip"
+    #output_path = "${path.module}/backend.zip"
+    output_path_layer   = "${path.module}/tt_lambda_layer.zip"
+    output_path_function = "${path.module}/tt_lambda_function.zip"
   }
 }
 
