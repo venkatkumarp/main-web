@@ -9,7 +9,7 @@ resource "aws_lambda_layer_version" "backend_layer" {
   layer_name       = "${var.environment}-${var.project_name}-layer"
   compatible_runtimes = ["python3.12"]
   s3_bucket        = var.s3_bucket_name
-  s3_key           = "tt_layer.zip"
+  s3_key           = "tt_lambda_layer.zip"
   description      = "Layer containing dependencies for the Lambda function"
 }
 ##############
@@ -65,7 +65,7 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
   handler       = "point-handler.point_handler"
   #filename      = data.archive_file.lambda_zip.output_path
   s3_bucket     = var.s3_bucket_name
-  s3_key        = "tt_backend.zip"
+  s3_key        = "tt_lambda_function.zip"
   publish       = true
   memory_size   = 1024
   ephemeral_storage {
