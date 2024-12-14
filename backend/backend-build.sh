@@ -48,15 +48,8 @@ cp -r "$backend_folder" "$temp_dir/backend"
 
 # Create exclusion list for backend function ZIP
 exclusion_list=(
-    "*.tfstate"
     ".terraform/*"
-    "*.log"
-    "*.tmp"
-    "node_modules/*"
-    ".git/*"
-    "*.env"
     "main.tf"
-    "*.tfbackend"
     "api/*"  # Exclude api folder
 )
 
