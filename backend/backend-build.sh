@@ -68,7 +68,7 @@ fi
 
 # Create ZIP file for Lambda Function (Backend folder)
 # Exclude Terraform, sonar, and build script files
-if ! zip -r "$output_path_function" backend -x \*.terraform/ \*sonar-project.properties \*backend-build.sh \*.tfbackend \*export-deps.sh \*api\* >&2; then
+if ! zip -r "$output_path_function" backend -x \*sonar-project.properties \*.terraform* \*backend-build.sh \*.tfbackend \*export-deps.sh \*api\* >&2; then
     error_exit "Failed to create Lambda Function ZIP file"
 fi
 
