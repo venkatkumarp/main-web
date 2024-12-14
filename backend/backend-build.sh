@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Check for required commands
+## Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
 
@@ -9,13 +9,12 @@ command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}'
 input_data=$(cat)
 env=$(echo "$input_data" | jq -r '.environment // empty')
 bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
-output_path_layer=$(echo "$input_data" | jq -r '.output_path_layer // empty')
-output_path_function=$(echo "$input_data" | jq -r '.output_path_function // empty')
+output_path=$(echo "$input_data" | jq -r '.output_path // empty')
 
 # Function for error handling that outputs valid JSON
 error_exit() {
     escaped_error=$(echo "$1" | jq -R .)
-    echo "{\"error\": ${escaped_error}}" >&2
+    echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
     exit 1
 }
 
@@ -26,11 +25,8 @@ fi
 if [ -z "$bucket_name" ]; then
     error_exit "bucket_name variable is not set in the input data."
 fi
-if [ -z "$output_path_layer" ]; then
-    error_exit "output_path_layer variable is not set in the input data."
-fi
-if [ -z "$output_path_function" ]; then
-    error_exit "output_path_function variable is not set in the input data."
+if [ -z "$output_path" ]; then
+    error_exit "output_path variable is not set in the input data."
 fi
 
 # Create temporary directory
@@ -40,64 +36,53 @@ trap 'rm -rf "$temp_dir"' EXIT
 # Get the directory where the script is located
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Check for API and Backend folders
-api_folder="$script_dir/api"
+# Check for backend folder
 backend_folder="$(dirname "$script_dir")/backend"
-
-if [ ! -d "$api_folder" ]; then
-    error_exit "No 'api' folder found for Lambda layer"
-fi
 if [ ! -d "$backend_folder" ]; then
-    error_exit "No 'backend' folder found for Lambda function"
+    error_exit "No 'backend' folder found"
 fi
 
-# Create temporary copies
-cp -r "$api_folder" "$temp_dir/api"
+# Create temporary copy of backend folder
 cp -r "$backend_folder" "$temp_dir/backend"
 
-# Remove specified files from backend
+# Remove specified files
 #rm -f "$temp_dir/backend/main.tf" \
 #      "$temp_dir/backend/sonar-project.properties" \
 #      "$temp_dir/backend/backend-build.sh"
 
-# Create ZIP file for Lambda Layer (API folder)
+# Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path_layer" api >&2; then
-    error_exit "Failed to create Lambda Layer ZIP file"
+if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* >&2; then
+    error_exit "Failed to create ZIP file"
 fi
 
-# Create ZIP file for Lambda Function (Backend folder)
-# Exclude Terraform, sonar, and build script files
-if ! zip -r "$output_path_function" backend -x \*sonar-project.properties \*.terraform* \*backend-build.sh \*.tfbackend \*export-deps.sh \*api\* >&2; then
-    error_exit "Failed to create Lambda Function ZIP file"
-fi
-
-# Upload Lambda Layer to S3
-if aws s3 cp "$output_path_layer" "s3://$bucket_name/tt_lambda_layer.zip" \
+# Upload to S3 as tt_backend.zip
+if aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
     --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded Lambda Layer package to S3 as tt_lambda_layer.zip" >&2
+    echo "Successfully uploaded backend package to S3 as tt_backend.zip" >&2
 else
-    error_exit "Failed to upload Lambda Layer package to S3"
+    error_exit "Failed to upload backend package to S3"
 fi
 
-# Upload Lambda Function to S3
-if aws s3 cp "$output_path_function" "s3://$bucket_name/tt_lambda_function.zip" \
-    --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded Lambda Function package to S3 as tt_lambda_function.zip" >&2
-else
-    error_exit "Failed to upload Lambda Function package to S3"
-fi
+# Retrieve version ID of uploaded object
+version_id=$(aws s3api head-object \
+    --bucket "$bucket_name" \
+    --key "tt_backend.zip" \
+    --query 'VersionId' \
+    --output text 2>/dev/null) || error_exit "Failed to get version ID"
 
-# Prepare JSON output for Terraform
+# Get list of packaged files
+packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
+packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
+
+# Output final JSON result
 echo "{
-    \"bucket\": \"$bucket_name\",
-    \"s3_key\": \"tt_lambda_function.zip\",
-    \"version_id\": \"$(date +%s)\",
     \"status\": \"success\",
-    \"message\": \"Lambda Layer and Function packages created and uploaded to S3\",
-    \"layer_s3_key\": \"tt_lambda_layer.zip\",
-    \"function_s3_key\": \"tt_lambda_function.zip\",
+    \"message\": \"Backend package created and uploaded to S3\",
     \"environment\": \"$env\",
-    \"layer_packaged_count\": \"$(find "$temp_dir/api" -type f | wc -l)\",
-    \"function_packaged_count\": \"$(find "$temp_dir/backend" -type f | wc -l)\"
+    \"bucket\": \"$bucket_name\",
+    \"version_id\": \"$version_id\",
+    \"s3_key\": \"tt_backend.zip\",
+    \"packaged_count\": \"${#packaged_files[@]}\",
+    \"packaged_files\": \"$packaged_files_string\"
 }"
