@@ -17,7 +17,7 @@ error_exit() {
 # Prerequisite checks
 command -v jq >/dev/null 2>&1 || error_exit "jq is not installed"
 command -v aws >/dev/null 2>&1 || error_exit "AWS CLI is not installed"
-command -v poetry >/dev/null 2>&1 || error_exit "Poetry is not installed"
+#command -v poetry >/dev/null 2>&1 || error_exit "Poetry is not installed"
 command -v python >/dev/null 2>&1 || error_exit "Python is not installed"
 command -v zip >/dev/null 2>&1 || error_exit "zip is not installed"
 
