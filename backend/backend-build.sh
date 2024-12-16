@@ -48,7 +48,10 @@ cp -r "$backend_folder" "$temp_dir/backend"
 # Change to the backend directory and install dependencies
 cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
 python -m pip install --upgrade poetry
-poetry install
+poetry install || (poetry lock && poetry install)
+chmod +x ./export-deps.sh
+./export-deps.sh
+pip install -r requirements.txt
 
 # Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
