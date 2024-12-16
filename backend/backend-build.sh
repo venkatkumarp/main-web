@@ -37,7 +37,7 @@ install_python() {
     fi
 
     # Install Python version (replace with desired version)
-    PYTHON_VERSION="3.9.7"
+    PYTHON_VERSION="3.12.1"
     pyenv install -s "$PYTHON_VERSION"
     pyenv global "$PYTHON_VERSION"
 }
