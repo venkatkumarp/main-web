@@ -42,31 +42,22 @@ if [ ! -d "$backend_folder" ]; then
     error_exit "No 'backend' folder found"
 fi
 
-# Create deployment directory
-mkdir -p "$temp_dir/deployment"
+# Create temporary copy of backend folder
+cp -r "$backend_folder" "$temp_dir/backend"
 
-# Copy backend files
-cp -r "$backend_folder"/* "$temp_dir/deployment/"
+# Change to the backend directory and install dependencies
+cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
 
-# Copy installed dependencies
-# Assuming dependencies were installed in the GitHub Actions step
-cp -r /home/runner/.local/lib/python*/site-packages/* "$temp_dir/deployment/"
-
-# Create virtual environment (optional, but can help verify dependencies)
-cd "$temp_dir/deployment"
-python3 -m venv venv
-source venv/bin/activate
+# Added new dependency installation steps
+python -m pip install --upgrade poetry
+poetry install || (poetry lock && poetry install)
+chmod +x ./export-deps.sh
+./export-deps.sh
 pip install -r requirements.txt
 
-# Deactivate virtual environment
-deactivate
-
-# Remove virtual environment files to save space
-rm -rf venv
-
-# Create ZIP file
-cd "$temp_dir"
-if ! zip -r "$output_path" deployment -x \*.pyc \*__pycache__\* \*.zip \*.git\* >&2; then
+# Create ZIP file from temporary directory
+cd "$temp_dir" || error_exit "Failed to change to temporary directory"
+if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev* >&2; then
     error_exit "Failed to create ZIP file"
 fi
 
@@ -86,7 +77,7 @@ version_id=$(aws s3api head-object \
     --output text 2>/dev/null) || error_exit "Failed to get version ID"
 
 # Get list of packaged files
-packaged_files=($(find "$temp_dir/deployment" -type f -printf "%P\n"))
+packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
 packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
 # Output final JSON result
