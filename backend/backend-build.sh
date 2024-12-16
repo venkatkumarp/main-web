@@ -54,7 +54,7 @@ cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
 # Dependency management with error handling
 {
     python -m pip install --upgrade poetry
-    poetry install || (poetry lock && poetry install)
+    poetry install  # || (poetry lock && poetry install)
     chmod +x ./export-deps.sh
     ./export-deps.sh
     pip install -r requirements.txt
