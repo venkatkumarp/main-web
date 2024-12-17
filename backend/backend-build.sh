@@ -1,118 +1,105 @@
 #!/bin/bash
+# Extensive debugging script
+
+# Debug function to output trace information
+debug_trace() {
+    echo "DEBUG: $*" >&2
+}
+
+# Redirect all output to a log file for detailed tracing
+exec > >(tee /tmp/backend_build_stdout.log) 2> >(tee /tmp/backend_build_stderr.log >&2)
+
+# Debugging output at the start
+debug_trace "Script started"
+debug_trace "Current directory: $(pwd)"
+debug_trace "Script path: $0"
+
+# Print environment and input
+set -x # Print each command as it's executed
+
+#!/bin/bash
 set -euo pipefail
 
-# Logging function
+# Comprehensive logging and error handling
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" >&2
 }
 
-# Error handling function with JSON output
+# Robust JSON error handling
 error_exit() {
     local error_message="$1"
     log "ERROR: $error_message"
-    jq -n \
-        --arg status "error" \
-        --arg message "$error_message" \
-        '{
-            status: $status, 
-            message: $message
-        }' >&2
+    
+    # Ensure clean, valid JSON output
+    printf '{"status":"error","message":"%s"}' "${error_message//\"/\\\"}" >&2
     exit 1
 }
 
-# Install Python if not available
-install_python() {
-    if ! command -v python &> /dev/null; then
-        log "Python is not installed. Installing Python..."
-        sudo apt-get update
-        sudo apt-get install -y python3 python3-pip
-        sudo ln -s /usr/bin/python3 /usr/bin/python
-    fi
-}
-
-# Install dependencies
-install_dependencies() {
-    log "Installing dependencies..."
-    python -m pip install --upgrade poetry
-    poetry install || (poetry lock && poetry install)
-    
-    chmod +x ./export-deps.sh
-    ./export-deps.sh
-    pip install -r requirements.txt
-}
-
-# Check required commands
+# Prerequisite checks
 check_prerequisites() {
-    for cmd in jq aws; do
-        command -v "$cmd" >/dev/null 2>&1 || error_exit "$cmd is not installed"
+    for cmd in jq aws python poetry zip; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            error_exit "Required command not found: $cmd"
+        fi
     done
 }
 
 # Main script execution
 main() {
-    # Read input from stdin
+    # Debug: Print raw input
+    debug_trace "Raw input:"
+    cat
+    debug_trace "Input reading complete"
+
+    # Read and parse input
     input_data=$(cat)
+    debug_trace "Input data: $input_data"
 
-    # Parse input using jq
-    env=$(echo "$input_data" | jq -r '.environment // empty')
-    bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
-    output_path=$(echo "$input_data" | jq -r '.output_path // empty')
+    # Robust input parsing with default empty strings
+    env=$(echo "$input_data" | jq -r '.environment // ""')
+    bucket_name=$(echo "$input_data" | jq -r '.bucket_name // ""')
+    output_path=$(echo "$input_data" | jq -r '.output_path // ""')
 
-    # Validate input variables
-    if [ -z "$env" ]; then
-        error_exit "environment variable is not set in the input data"
-    fi
-    if [ -z "$bucket_name" ]; then
-        error_exit "bucket_name variable is not set in the input data"
-    fi
-    if [ -z "$output_path" ]; then
-        error_exit "output_path variable is not set in the input data"
-    fi
+    # Validate inputs
+    [ -z "$env" ] && error_exit "Environment not specified"
+    [ -z "$bucket_name" ] && error_exit "Bucket name not specified"
+    [ -z "$output_path" ] && error_exit "Output path not specified"
 
-    # Install prerequisites
-    install_python
-    install_dependencies
+    # Prerequisite check
     check_prerequisites
 
     # Create temporary directory
     temp_dir=$(mktemp -d)
     trap 'rm -rf "$temp_dir"' EXIT
 
-    # Get script and backend directory paths
+    # Locate backend folder
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     backend_folder="$(dirname "$script_dir")/backend"
 
     # Validate backend folder
-    if [ ! -d "$backend_folder" ]; then
-        error_exit "No 'backend' folder found"
-    fi
+    [ ! -d "$backend_folder" ] && error_exit "Backend folder not found"
 
-    # Create temporary copy of backend folder
-    log "Copying backend files to temporary directory..."
+    # Copy backend files
     cp -r "$backend_folder" "$temp_dir/backend"
 
-    # Create ZIP file
-    cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-    log "Creating ZIP archive..."
-    if ! zip -r "$output_path" backend >&2; then
-        error_exit "Failed to create ZIP file"
-    fi
+    # Create ZIP
+    cd "$temp_dir" || error_exit "Directory change failed"
+    debug_trace "Creating ZIP file"
+    zip -r "$output_path" backend
 
-    # Upload to S3
-    log "Uploading to S3..."
-    if ! aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
-        --metadata "environment=$env" >&2; then
-        error_exit "Failed to upload backend package to S3"
-    fi
+    # S3 Upload
+    debug_trace "Uploading to S3"
+    aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
+        --metadata "environment=$env"
 
-    # Retrieve version ID
+    # Get version ID
     version_id=$(aws s3api head-object \
         --bucket "$bucket_name" \
         --key "tt_backend.zip" \
         --query 'VersionId' \
-        --output text 2>/dev/null) || error_exit "Failed to get version ID"
+        --output text)
 
-    # Get list of packaged files
+    # Prepare file list
     packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
     packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
@@ -140,3 +127,6 @@ main() {
 
 # Execute main function
 main
+
+# Final debug trace
+debug_trace "Script completed successfully"
