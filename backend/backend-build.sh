@@ -80,12 +80,13 @@ fi
 # Create temporary copy of backend folder
 cp -r "$backend_folder" "$temp_dir/backend"
 
-# Navigate to the backend folder and install Python dependencies using Poetry
+# Navigate to the backend folder
 cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
 
-# Install Python dependencies if poetry.lock and pyproject.toml are present
+# Try to install dependencies with Poetry
+# If installation fails, regenerate the poetry.lock and try again
 if [ -f "pyproject.toml" ]; then
-    poetry install || error_exit "Failed to install dependencies with Poetry"
+    poetry install || (poetry lock && poetry install) || error_exit "Failed to install dependencies with Poetry"
 else
     echo "No Poetry configuration found (pyproject.toml). Skipping Poetry installation."
 fi
