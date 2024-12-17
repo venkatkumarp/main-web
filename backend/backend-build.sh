@@ -106,4 +106,5 @@ output_json=$(jq -n \
         packaged_files: $packaged_files
     }')
 
+# Print the JSON output
 echo "$output_json" | jq . || error_exit "Invalid JSON output"
