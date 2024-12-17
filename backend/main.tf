@@ -113,7 +113,7 @@ data "external" "backend_package" {
 ##                                                            ##
 ################################################################
 
-output "backend_code_bucket" {
+/* output "backend_code_bucket" {
   value       = data.external.backend_package.result.bucket
   description = "Name of the S3 bucket containing the backend code"
 }
@@ -136,4 +136,4 @@ output "backend_status" {
 output "backend_message" {
   value       = data.external.backend_package.result.message
   description = "Detailed message about the backend packaging process"
-}
+}*/
