@@ -1,6 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+# Install Python
+if ! command -v python &> /dev/null; then
+    echo "Python is not installed. Installing Python..."
+    sudo apt-get update
+    sudo apt-get install -y python3 python3-pip
+    sudo ln -s /usr/bin/python3 /usr/bin/python
+fi
+
 # Install dependencies
 python -m pip install --upgrade poetry
 poetry install || (poetry lock && poetry install)
@@ -78,13 +86,24 @@ packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
 packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
 # Output final JSON result
-echo "{
-    \"status\": \"success\",
-    \"message\": \"Backend package created and uploaded to S3\",
-    \"environment\": \"$env\",
-    \"bucket\": \"$bucket_name\",
-    \"version_id\": \"$version_id\",
-    \"s3_key\": \"tt_backend.zip\",
-    \"packaged_count\": \"${#packaged_files[@]}\",
-    \"packaged_files\": \"$packaged_files_string\"
-}"
+output_json=$(jq -n \
+    --arg status "success" \
+    --arg message "Backend package created and uploaded to S3" \
+    --arg environment "$env" \
+    --arg bucket "$bucket_name" \
+    --arg version_id "$version_id" \
+    --arg s3_key "tt_backend.zip" \
+    --arg packaged_count "${#packaged_files[@]}" \
+    --arg packaged_files "$packaged_files_string" \
+    '{
+        status: $status,
+        message: $message,
+        environment: $environment,
+        bucket: $bucket,
+        version_id: $version_id,
+        s3_key: $s3_key,
+        packaged_count: $packaged_count,
+        packaged_files: $packaged_files
+    }')
+
+echo "$output_json" | jq . || error_exit "Invalid JSON output"
