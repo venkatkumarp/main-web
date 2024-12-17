@@ -4,14 +4,7 @@ set -euo pipefail
 ## Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
-command -v python >/dev/null 2>&1 || { echo '{"error": "Python is not installed"}' >&2; exit 1; }
-
-# Check if pip is installed, if not install it
-if ! command -v pip >/dev/null 2>&1; then
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-    python get-pip.py
-    rm get-pip.py
-fi
+command -v poetry >/dev/null 2>&1 || { echo '{"error": "Poetry is not installed"}' >&2; exit 1; }
 
 # Load JSON input using jq
 input_data=$(cat)
@@ -53,17 +46,16 @@ fi
 # Create temporary copy of backend folder
 cp -r "$backend_folder" "$temp_dir/backend"
 
-# Change to the backend directory and install dependencies
+# Generate the requirements.txt using Poetry
 cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
-python -m pip install --upgrade poetry
-poetry install || (poetry lock && poetry install)
-chmod +x ./export-deps.sh
-./export-deps.sh
-pip install -r requirements.txt
+poetry export --without-hashes -o requirements.txt || error_exit "Failed to generate requirements.txt"
+
+# Install dependencies into the temporary directory
+pip install --no-cache-dir -r requirements.txt -t "$temp_dir/backend" || error_exit "Failed to install dependencies"
 
 # Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev* >&2; then
+if ! zip -r "$output_path" backend >&2; then
     error_exit "Failed to create ZIP file"
 fi
 
