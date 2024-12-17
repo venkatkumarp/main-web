@@ -20,6 +20,26 @@ error_exit() {
     exit 1
 }
 
+# Install Python and Poetry
+install_python_poetry() {
+    log "Checking and installing Python and Poetry..."
+    
+    # Install Python if not exists
+    if ! command -v python3 &> /dev/null; then
+        log "Installing Python3"
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip
+        sudo ln -s /usr/bin/python3 /usr/bin/python
+    fi
+
+    # Install Poetry
+    if ! command -v poetry &> /dev/null; then
+        log "Installing Poetry"
+        curl -sSL https://install.python-poetry.org | python3 -
+        export PATH="/root/.local/bin:$PATH"
+    fi
+}
+
 # Prerequisite checks
 check_prerequisites() {
     local missing_commands=()
@@ -34,8 +54,34 @@ check_prerequisites() {
     fi
 }
 
+# Install project dependencies
+install_dependencies() {
+    log "Installing project dependencies..."
+    
+    # Upgrade pip and poetry
+    python -m pip install --upgrade pip
+    python -m pip install --upgrade poetry
+    
+    # Install dependencies
+    poetry install || (poetry lock && poetry install)
+    
+    # Export requirements if export-deps script exists
+    if [ -f ./export-deps.sh ]; then
+        chmod +x ./export-deps.sh
+        ./export-deps.sh
+    fi
+    
+    # Install requirements if file exists
+    if [ -f requirements.txt ]; then
+        pip install -r requirements.txt
+    fi
+}
+
 # Main script execution
 main() {
+    # Install Python and Poetry first
+    install_python_poetry
+
     # Read input from stdin, using jq to parse and validate
     input_data=$(cat | jq '.')
 
@@ -57,6 +103,9 @@ main() {
 
     # Prerequisite check
     check_prerequisites
+
+    # Install project dependencies
+    install_dependencies
 
     # Create temporary directory
     temp_dir=$(mktemp -d)
