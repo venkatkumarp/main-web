@@ -116,14 +116,12 @@ version_id=$(aws s3api head-object \
 packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
 packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
-# Output final JSON result
-echo "{
-    \"status\": \"success\",
-    \"message\": \"Backend package created and uploaded to S3\",
-    \"environment\": \"$env\",
-    \"bucket\": \"$bucket_name\",
-    \"version_id\": \"$version_id\",
-    \"s3_key\": \"tt_backend.zip\",
-    \"packaged_count\": \"${#packaged_files[@]}\",
-    \"packaged_files\": \"$packaged_files_string\"
-}"
+# Output final JSON result, ensuring all values are valid strings and escaped
+echo "{\"status\": \"success\", \
+    \"message\": \"Backend package created and uploaded to S3\", \
+    \"environment\": \"$(echo "$env" | jq -R .)\", \
+    \"bucket\": \"$(echo "$bucket_name" | jq -R .)\", \
+    \"version_id\": \"$(echo "$version_id" | jq -R .)\", \
+    \"s3_key\": \"tt_backend.zip\", \
+    \"packaged_count\": \"${#packaged_files[@]}\", \
+    \"packaged_files\": \"$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')\" }"
