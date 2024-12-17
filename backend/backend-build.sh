@@ -14,7 +14,7 @@ output_path=$(echo "$input_data" | jq -r '.output_path // empty')
 # Function for error handling that outputs valid JSON
 error_exit() {
     escaped_error=$(echo "$1" | jq -R .)
-    echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
+    echo "{\"error\": ${escaped_error}}" >&2
     exit 1
 }
 
@@ -42,50 +42,56 @@ if [ ! -d "$backend_folder" ]; then
     error_exit "No 'backend' folder found"
 fi
 
-# Create temporary copy of backend folder
-cp -r "$backend_folder" "$temp_dir/backend"
+# Suppress stdout, redirect stderr to /dev/null to prevent any debug output
+{
+    # Create temporary copy of backend folder
+    cp -r "$backend_folder" "$temp_dir/backend"
 
-# Change to the backend directory and install dependencies
-cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
-python -m pip install --upgrade poetry
-poetry install || (poetry lock && poetry install)
-chmod +x ./export-deps.sh
-./export-deps.sh
-pip install -r requirements.txt
+    # Change to the backend directory and install dependencies
+    cd "$temp_dir/backend"
+    python -m pip install --upgrade poetry
+    poetry install || (poetry lock && poetry install)
+    chmod +x ./export-deps.sh
+    ./export-deps.sh
+    pip install -r requirements.txt
 
-# Create ZIP file from temporary directory
-cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev* >&2; then
-    error_exit "Failed to create ZIP file"
-fi
+    # Create ZIP file from temporary directory
+    cd "$temp_dir"
+    zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev*
 
-# Upload to S3 as tt_backend.zip
-if aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
-    --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded backend package to S3 as tt_backend.zip" >&2
-else
-    error_exit "Failed to upload backend package to S3"
-fi
+    # Upload to S3 as tt_backend.zip
+    aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
+        --metadata "environment=$env"
 
-# Retrieve version ID of uploaded object
-version_id=$(aws s3api head-object \
-    --bucket "$bucket_name" \
-    --key "tt_backend.zip" \
-    --query 'VersionId' \
-    --output text 2>/dev/null) || error_exit "Failed to get version ID"
+    # Retrieve version ID of uploaded object
+    version_id=$(aws s3api head-object \
+        --bucket "$bucket_name" \
+        --key "tt_backend.zip" \
+        --query 'VersionId' \
+        --output text)
 
-# Get list of packaged files
-packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
-packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
+    # Get list of packaged files
+    packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
+    packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
-# Output final JSON result
-echo "{
-    \"status\": \"success\",
-    \"message\": \"Backend package created and uploaded to S3\",
-    \"environment\": \"$env\",
-    \"bucket\": \"$bucket_name\",
-    \"version_id\": \"$version_id\",
-    \"s3_key\": \"tt_backend.zip\",
-    \"packaged_count\": \"${#packaged_files[@]}\",
-    \"packaged_files\": \"$packaged_files_string\"
-}"
+    # Output final JSON result
+    jq -n \
+        --arg status "success" \
+        --arg message "Backend package created and uploaded to S3" \
+        --arg environment "$env" \
+        --arg bucket "$bucket_name" \
+        --arg version_id "$version_id" \
+        --arg s3_key "tt_backend.zip" \
+        --arg packaged_count "${#packaged_files[@]}" \
+        --arg packaged_files "$packaged_files_string" \
+        '{
+            status: $status,
+            message: $message,
+            environment: $environment,
+            bucket: $bucket,
+            version_id: $version_id,
+            s3_key: $s3_key,
+            packaged_count: $packaged_count,
+            packaged_files: $packaged_files
+        }'
+} 2>/dev/null
