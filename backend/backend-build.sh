@@ -1,100 +1,126 @@
 #!/bin/bash
 set -euo pipefail
 
-# Redirect all debugging output to a file
-exec 2>/tmp/backend-build-debug.log
+# Comprehensive debugging log file
+DEBUG_LOG="/tmp/backend-build-full-debug.log"
 
-# Function to log debug information
-debug_log() {
-    echo "[DEBUG] $1" >&2
-}
+# Redirect all output (stdout and stderr) to a comprehensive log
+exec > >(tee -a "$DEBUG_LOG") 2>&1
 
-# Strict error handling function
+# Enhanced error handling function
 error_exit() {
-    debug_log "ERROR: $1"
-    jq -n --arg error "$1" '{"error": $error}' >&2
+    local error_message="$1"
+    echo "ERROR: $error_message" >&2
+    # Output a valid JSON error for Terraform
+    jq -n \
+        --arg error "$error_message" \
+        '{error: $error}' >&2
     exit 1
 }
 
-debug_log "Script started"
+# Log start of script
+echo "Backend Build Script Started: $(date)"
+echo "Current Working Directory: $(pwd)"
+echo "Script Location: $0"
 
-# Validate required commands
-for cmd in jq aws python poetry zip; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-        error_exit "$cmd is not installed"
-    fi
-done
+# Print environment variables
+echo "Environment Variables:"
+env
 
-debug_log "Commands validated"
-
-# Read input data
+# Validate input
 input_data=$(cat)
-debug_log "Input data: $input_data"
+echo "Raw Input Data: $input_data"
 
-# Parse input using jq with error handling
-env=$(echo "$input_data" | jq -r '.environment // empty') || error_exit "Failed to parse environment"
-bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty') || error_exit "Failed to parse bucket_name"
-output_path=$(echo "$input_data" | jq -r '.output_path // empty') || error_exit "Failed to parse output_path"
+# Try to parse input with verbose error handling
+parse_input() {
+    local key="$1"
+    local value
+    value=$(echo "$input_data" | jq -r ".$key // empty")
+    if [ -z "$value" ]; then
+        error_exit "Missing or empty input: $key"
+    fi
+    echo "$value"
+}
 
-debug_log "Parsed inputs: env=$env, bucket=$bucket_name, output_path=$output_path"
+# Parse inputs with detailed logging
+env=$(parse_input "environment")
+bucket_name=$(parse_input "bucket_name")
+output_path=$(parse_input "output_path")
 
-# Validate inputs
-[ -z "$env" ] && error_exit "Environment is not set"
-[ -z "$bucket_name" ] && error_exit "Bucket name is not set"
-[ -z "$output_path" ] && error_exit "Output path is not set"
+echo "Parsed Inputs:"
+echo "Environment: $env"
+echo "Bucket Name: $bucket_name"
+echo "Output Path: $output_path"
+
+# Prerequisite checks
+check_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        error_exit "Required command not found: $1"
+    fi
+    echo "Command verified: $1"
+}
+
+# Check required commands
+check_command jq
+check_command aws
+check_command python
+check_command poetry
+check_command zip
 
 # Create temporary directory
 temp_dir=$(mktemp -d)
+echo "Temporary Directory: $temp_dir"
 trap 'rm -rf "$temp_dir"' EXIT
-debug_log "Temporary directory: $temp_dir"
 
 # Get script and backend directories
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 backend_folder="$(dirname "$script_dir")/backend"
 
-debug_log "Script directory: $script_dir"
-debug_log "Backend folder: $backend_folder"
+echo "Script Directory: $script_dir"
+echo "Backend Folder: $backend_folder"
 
-# Validate backend folder exists
-[ ! -d "$backend_folder" ] && error_exit "Backend folder not found"
+# Validate backend folder
+if [ ! -d "$backend_folder" ]; then
+    error_exit "Backend folder not found: $backend_folder"
+fi
 
-# Execute all operations with error tracing
+# Comprehensive build process with extensive logging
 {
-    debug_log "Copying backend folder"
+    echo "Copying backend folder..."
     cp -r "$backend_folder" "$temp_dir/backend"
 
-    debug_log "Changing to backend directory"
-    cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
+    echo "Changing to backend directory..."
+    cd "$temp_dir/backend"
 
-    debug_log "Installing dependencies"
+    echo "Installing dependencies..."
     python -m pip install --upgrade poetry
     poetry install || (poetry lock && poetry install)
 
-    debug_log "Exporting dependencies"
+    echo "Exporting dependencies..."
     chmod +x ./export-deps.sh
     ./export-deps.sh
     pip install -r requirements.txt
 
-    debug_log "Creating ZIP file"
-    cd "$temp_dir" || error_exit "Failed to change to temp directory"
-    zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev* || error_exit "ZIP creation failed"
+    echo "Creating ZIP file..."
+    cd "$temp_dir"
+    zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev*
 
-    debug_log "Uploading to S3"
+    echo "Uploading to S3..."
     aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
-        --metadata "environment=$env" || error_exit "S3 upload failed"
+        --metadata "environment=$env"
 
-    debug_log "Retrieving version ID"
+    echo "Retrieving version ID..."
     version_id=$(aws s3api head-object \
         --bucket "$bucket_name" \
         --key "tt_backend.zip" \
         --query 'VersionId' \
-        --output text) || error_exit "Failed to get version ID"
+        --output text)
 
-    debug_log "Getting packaged files"
+    echo "Collecting packaged files..."
     packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
     packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
-    debug_log "Generating output JSON"
+    # Final JSON output
     jq -n \
         --arg status "success" \
         --arg message "Backend package created and uploaded to S3" \
@@ -115,6 +141,6 @@ debug_log "Backend folder: $backend_folder"
             packaged_files: $packaged_files
         }'
 
-} >&2 # Redirect all output to stderr to prevent any stdout interference
+} || error_exit "Build process failed"
 
-debug_log "Script completed successfully"
+echo "Backend Build Script Completed Successfully: $(date)"
