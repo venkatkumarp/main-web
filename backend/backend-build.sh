@@ -4,13 +4,6 @@ set -euo pipefail
 ## Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
-command -v python >/dev/null 2>&1 || { echo '{"error": "Python is not installed"}' >&2; exit 1; }
-
-# Load JSON input using jq
-input_data=$(cat)
-env=$(echo "$input_data" | jq -r '.environment // empty')
-bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
-output_path=$(echo "$input_data" | jq -r '.output_path // empty')
 
 # Function for error handling that outputs valid JSON
 error_exit() {
@@ -18,6 +11,47 @@ error_exit() {
     echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
     exit 1
 }
+
+# Function to install Python
+install_python() {
+    echo "Installing Python..."
+    if command -v python3 >/dev/null 2>&1; then
+        echo "Python is already installed."
+    else
+        echo "Python not found. Installing Python..."
+        # Install Python (ensure your system has package management like apt or yum)
+        if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y python3 python3-pip || error_exit "Failed to install Python using apt-get"
+        elif command -v yum >/dev/null 2>&1; then
+            sudo yum install -y python3 python3-pip || error_exit "Failed to install Python using yum"
+        else
+            error_exit "Unsupported package manager. Please install Python manually."
+        fi
+    fi
+}
+
+# Function to install Poetry
+install_poetry() {
+    echo "Installing Poetry..."
+    if command -v poetry >/dev/null 2>&1; then
+        echo "Poetry is already installed."
+    else
+        echo "Poetry not found. Installing Poetry..."
+        # Install Poetry using the official installer
+        curl -sSL https://install.python-poetry.org | python3 - || error_exit "Failed to install Poetry"
+    fi
+}
+
+# Install Python and Poetry if not already installed
+install_python
+install_poetry
+
+# Load JSON input using jq
+input_data=$(cat)
+env=$(echo "$input_data" | jq -r '.environment // empty')
+bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
+output_path=$(echo "$input_data" | jq -r '.output_path // empty')
 
 # Check for required input variables
 if [ -z "$env" ]; then
@@ -46,36 +80,26 @@ fi
 # Create temporary copy of backend folder
 cp -r "$backend_folder" "$temp_dir/backend"
 
-# Change to the backend directory and install dependencies
+# Navigate to the backend folder and install Python dependencies using Poetry
 cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
 
-# Set environment variables for Poetry and Python installations
-export ENVIRONMENT="$env"
-export BUCKET_NAME="$bucket_name"
-
-# Install Poetry
-python -m pip install --upgrade poetry || error_exit "Failed to install Poetry"
-
-# Install dependencies using Poetry
-poetry install || (poetry lock && poetry install) || error_exit "Failed to install dependencies with Poetry"
-
-# Make export-deps.sh executable and run it
-chmod +x ./export-deps.sh
-./export-deps.sh || error_exit "Failed to run export-deps.sh"
-
-# Install additional dependencies from requirements.txt
-pip install -r requirements.txt || error_exit "Failed to install dependencies from requirements.txt"
+# Install Python dependencies if poetry.lock and pyproject.toml are present
+if [ -f "pyproject.toml" ]; then
+    poetry install || error_exit "Failed to install dependencies with Poetry"
+else
+    echo "No Poetry configuration found (pyproject.toml). Skipping Poetry installation."
+fi
 
 # Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev* >&2; then
+if ! zip -r "$output_path" backend >&2; then
     error_exit "Failed to create ZIP file"
 fi
 
-# Upload to S3 as test_backend.zip
-if aws s3 cp "$output_path" "s3://$bucket_name/test_backend.zip" \
+# Upload to S3 as tt_backend.zip
+if aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
     --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded backend package to S3 as test_backend.zip" >&2
+    echo "Successfully uploaded backend package to S3 as tt_backend.zip" >&2
 else
     error_exit "Failed to upload backend package to S3"
 fi
@@ -83,7 +107,7 @@ fi
 # Retrieve version ID of uploaded object
 version_id=$(aws s3api head-object \
     --bucket "$bucket_name" \
-    --key "test_backend.zip" \
+    --key "tt_backend.zip" \
     --query 'VersionId' \
     --output text 2>/dev/null) || error_exit "Failed to get version ID"
 
@@ -98,7 +122,7 @@ echo "{
     \"environment\": \"$env\",
     \"bucket\": \"$bucket_name\",
     \"version_id\": \"$version_id\",
-    \"key\": \"test_backend.zip\",
+    \"s3_key\": \"tt_backend.zip\",
     \"packaged_count\": \"${#packaged_files[@]}\",
     \"packaged_files\": \"$packaged_files_string\"
 }"
