@@ -11,7 +11,7 @@ exec > >(tee -a "$DEBUG_LOG") 2>&1
 error_exit() {
     local error_message="$1"
     echo "ERROR: $error_message" >&2
-    # Output a valid JSON error for Terraform
+    # Ensure JSON output for Terraform
     jq -n \
         --arg error "$error_message" \
         '{error: $error}' >&2
@@ -23,15 +23,53 @@ echo "Backend Build Script Started: $(date)"
 echo "Current Working Directory: $(pwd)"
 echo "Script Location: $0"
 
-# Print environment variables
-echo "Environment Variables:"
-env
+# Check and install Python if needed
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Python3 not found. Attempting to install..."
+    if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip
+    elif command -v yum >/dev/null 2>&1; then
+        sudo yum install -y python3 python3-pip
+    elif command -v brew >/dev/null 2>&1; then
+        brew install python
+    else
+        error_exit "Unable to install Python. Please install manually."
+    fi
+fi
 
-# Validate input
+# Ensure pip is up to date
+python3 -m pip install --upgrade pip
+
+# Check and install Poetry if needed
+if ! command -v poetry >/dev/null 2>&1; then
+    echo "Poetry not found. Installing..."
+    curl -sSL https://install.python-poetry.org | python3 -
+    
+    # Add Poetry to PATH if not already there
+    if [ -f "$HOME/.poetry/env" ]; then
+        source "$HOME/.poetry/env"
+    elif [ -f "$HOME/.local/bin/poetry" ]; then
+        export PATH="$HOME/.local/bin:$PATH"
+    else
+        error_exit "Failed to install Poetry"
+    fi
+fi
+
+# Print Python and Poetry versions
+echo "Python Version: $(python3 --version)"
+echo "Poetry Version: $(poetry --version)"
+
+# Read and validate JSON input
 input_data=$(cat)
 echo "Raw Input Data: $input_data"
 
-# Try to parse input with verbose error handling
+# Validate JSON input using jq
+if ! echo "$input_data" | jq empty >/dev/null 2>&1; then
+    error_exit "Invalid JSON input"
+fi
+
+# Parse inputs with jq
 parse_input() {
     local key="$1"
     local value
@@ -42,7 +80,7 @@ parse_input() {
     echo "$value"
 }
 
-# Parse inputs with detailed logging
+# Parse required inputs
 env=$(parse_input "environment")
 bucket_name=$(parse_input "bucket_name")
 output_path=$(parse_input "output_path")
@@ -60,11 +98,9 @@ check_command() {
     echo "Command verified: $1"
 }
 
-# Check required commands
+# Check remaining required commands
 check_command jq
 check_command aws
-check_command python
-check_command poetry
 check_command zip
 
 # Create temporary directory
@@ -92,14 +128,22 @@ fi
     echo "Changing to backend directory..."
     cd "$temp_dir/backend"
 
-    echo "Installing dependencies..."
-    python -m pip install --upgrade poetry
+    echo "Installing dependencies with Poetry..."
+    poetry env use python3
     poetry install || (poetry lock && poetry install)
 
-    echo "Exporting dependencies..."
-    chmod +x ./export-deps.sh
-    ./export-deps.sh
-    pip install -r requirements.txt
+    # Attempt to export dependencies if export script exists
+    if [ -f "./export-deps.sh" ]; then
+        echo "Exporting dependencies..."
+        chmod +x ./export-deps.sh
+        ./export-deps.sh
+    fi
+
+    # Fallback dependency installation
+    if [ -f "requirements.txt" ]; then
+        echo "Installing requirements..."
+        poetry run pip install -r requirements.txt
+    fi
 
     echo "Creating ZIP file..."
     cd "$temp_dir"
@@ -120,7 +164,7 @@ fi
     packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
     packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
-    # Final JSON output
+    # Final JSON output with error handling
     jq -n \
         --arg status "success" \
         --arg message "Backend package created and uploaded to S3" \
