@@ -6,6 +6,7 @@ command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; 
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
 
 # Read input from Terraform
+# Read input from Terraform
 input_data=$(cat)
 env=$(echo "$input_data" | jq -r '.environment // empty')
 bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
