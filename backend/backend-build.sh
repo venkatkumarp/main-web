@@ -1,127 +1,59 @@
 #!/bin/bash
 set -euo pipefail
 
-## Check for required commands
+# Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
 
-# Function for error handling that outputs valid JSON
+# Read input from Terraform
+input_data=$(cat)
+env=$(echo "$input_data" | jq -r '.environment // empty')
+bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
+output_path=$(echo "$input_data" | jq -r '.output_path // empty')
+
+# Error handling function
 error_exit() {
     escaped_error=$(echo "$1" | jq -R .)
     echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
     exit 1
 }
 
-# Function to install Python
-install_python() {
-    echo "Installing Python..."
-    if command -v python3 >/dev/null 2>&1; then
-        echo "Python is already installed."
-    else
-        echo "Python not found. Installing Python..."
-        # Install Python (ensure your system has package management like apt or yum)
-        if command -v apt-get >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y python3 python3-pip || error_exit "Failed to install Python using apt-get"
-        elif command -v yum >/dev/null 2>&1; then
-            sudo yum install -y python3 python3-pip || error_exit "Failed to install Python using yum"
-        else
-            error_exit "Unsupported package manager. Please install Python manually."
-        fi
-    fi
-}
+# Validate input variables
+[ -z "$env" ] && error_exit "Environment variable is not set."
+[ -z "$bucket_name" ] && error_exit "Bucket name is not set."
+[ -z "$output_path" ] && error_exit "Output path is not set."
 
-# Function to install Poetry
-install_poetry() {
-    echo "Installing Poetry..."
-    if command -v poetry >/dev/null 2>&1; then
-        echo "Poetry is already installed."
-    else
-        echo "Poetry not found. Installing Poetry..."
-        # Install Poetry using the official installer
-        curl -sSL https://install.python-poetry.org | python3 - || error_exit "Failed to install Poetry"
-    fi
-}
-
-# Install Python and Poetry if not already installed
-install_python
-install_poetry
-
-# Load JSON input using jq
-input_data=$(cat)
-env=$(echo "$input_data" | jq -r '.environment // empty')
-bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
-output_path=$(echo "$input_data" | jq -r '.output_path // empty')
-
-# Check for required input variables
-if [ -z "$env" ]; then
-    error_exit "environment variable is not set in the input data."
-fi
-if [ -z "$bucket_name" ]; then
-    error_exit "bucket_name variable is not set in the input data."
-fi
-if [ -z "$output_path" ]; then
-    error_exit "output_path variable is not set in the input data."
-fi
-
-# Create temporary directory
+# Create a temporary directory
 temp_dir=$(mktemp -d)
 trap 'rm -rf "$temp_dir"' EXIT
 
-# Get the directory where the script is located
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Check for backend folder
-backend_folder="$(dirname "$script_dir")/backend"
+# Verify the existence of the backend folder
+backend_folder="backend"
 if [ ! -d "$backend_folder" ]; then
-    error_exit "No 'backend' folder found"
+    error_exit "No 'backend' folder found."
 fi
 
-# Create temporary copy of backend folder
+# Copy backend folder to temporary directory
 cp -r "$backend_folder" "$temp_dir/backend"
 
-# Navigate to the backend folder
-cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
+# Change to backend directory and install dependencies
+cd "$temp_dir/backend" || error_exit "Failed to change to backend directory."
+python -m pip install --upgrade poetry || error_exit "Failed to install Poetry."
+poetry install || (poetry lock && poetry install) || error_exit "Failed to install dependencies using Poetry."
+chmod +x ./export-deps.sh
+./export-deps.sh || error_exit "Failed to execute export-deps.sh."
+pip install -r requirements.txt || error_exit "Failed to install requirements.txt dependencies."
 
-# Try to install dependencies with Poetry
-# If installation fails, regenerate the poetry.lock and try again
-if [ -f "pyproject.toml" ]; then
-    poetry install || (poetry lock && poetry install) || error_exit "Failed to install dependencies with Poetry"
-else
-    echo "No Poetry configuration found (pyproject.toml). Skipping Poetry installation."
+# Create a ZIP package
+cd "$temp_dir" || error_exit "Failed to change to temporary directory."
+if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev*; then
+    error_exit "Failed to create ZIP file."
 fi
 
-# Create ZIP file from temporary directory
-cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend >&2; then
-    error_exit "Failed to create ZIP file"
+# Upload to S3
+if ! aws s3 cp "$output_path" "s3://$bucket_name/test_backend.zip" --metadata "environment=$env"; then
+    error_exit "Failed to upload backend package to S3."
 fi
 
-# Upload to S3 as tt_backend.zip
-if aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
-    --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded backend package to S3 as tt_backend.zip" >&2
-else
-    error_exit "Failed to upload backend package to S3"
-fi
-
-# Retrieve version ID of uploaded object
-version_id=$(aws s3api head-object \
-    --bucket "$bucket_name" \
-    --key "tt_backend.zip" \
-    --query 'VersionId' \
-    --output text 2>/dev/null) || error_exit "Failed to get version ID"
-
-# Get list of packaged files
-packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
-packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
-
-# Output final JSON result, ensuring all values are valid strings and escaped
-echo "{\"status\": \"success\", \
-    \"message\": \"Backend package created and uploaded to S3\", \
-    \"environment\": \"$(echo "$env" | jq -R .)\", \
-    \"bucket\": \"$(echo "$bucket_name" | jq -R .)\", \
-    \"version_id\": \"$(echo "$version_id" | jq -R .)\", \
-    \"s3_key\": \"tt_backend.zip\", \
-    \"packaged_count\": \"${#packaged_files[@]}\", \
-    \"packaged_files\": \"$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')\" }"
+# Output success result in JSON
+echo "{\"status\": \"success\", \"bucket\": \"$bucket_name\", \"s3_key\": \"test_backend.zip\"}"
