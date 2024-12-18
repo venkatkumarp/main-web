@@ -13,6 +13,7 @@ fi
 
 # Load JSON input using jq
 input_data=$(cat)
+
 env=$(echo "$input_data" | jq -r '.environment // empty')
 bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
 output_path=$(echo "$input_data" | jq -r '.output_path // empty')
@@ -52,35 +53,28 @@ fi
 cp -r "$backend_folder" "$temp_dir/backend"
 
 # Step 1: Create a Python virtual environment
-echo "Creating virtual environment in $temp_dir/venv"
 python3 -m venv "$temp_dir/venv"
 
 # Step 2: Activate the virtual environment
-echo "Activating the virtual environment"
 source "$temp_dir/venv/bin/activate"
 
 # Step 3: Install Poetry inside the virtual environment
-echo "Installing Poetry inside the virtual environment"
 pip install poetry
 
 # Step 4: Export dependencies from Poetry to requirements.txt
 cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
-echo "Exporting dependencies from Poetry to requirements.txt..."
 poetry export --without-hashes -o requirements.txt
 
 # Step 5: Install dependencies into the virtual environment
-echo "Installing dependencies into the virtual environment..."
 pip install -r "$temp_dir/backend/requirements.txt"
 
 # Step 6: Include the virtual environment and backend code in the zip
-echo "Zipping backend code and virtual environment..."
-zip -r "$output_path" "$temp_dir/backend" "$temp_dir/venv" -x "*.git/*" "*.terraform/*" "*.env" "*.gitignore"  # Exclude unnecessary files
+cd "$temp_dir" || error_exit "Failed to change directory"
+zip -r "$output_path" "backend" "venv" -x "*.git/*" "*.terraform/*" "*.env" "*.gitignore"
 
 # Step 7: Upload to S3 as tt_backend.zip
-if aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
+if ! aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
     --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded backend package to S3 as tt_backend.zip" >&2
-else
     error_exit "Failed to upload backend package to S3"
 fi
 
@@ -92,18 +86,26 @@ version_id=$(aws s3api head-object \
     --output text 2>/dev/null) || error_exit "Failed to get version ID"
 
 # Step 9: Get list of packaged files
-packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
-packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
+# Use jq to properly escape and create JSON array of files
+packaged_files=$(find "$temp_dir/backend" -type f -printf "%P\n" | jq -R . | jq -s .)
 
-# Output final JSON result
-# Ensuring the final output is valid JSON
-echo "{
-    \"status\": \"success\",
-    \"message\": \"Backend package created and uploaded to S3\",
-    \"environment\": \"$env\",
-    \"bucket\": \"$bucket_name\",
-    \"version_id\": \"$version_id\",
-    \"s3_key\": \"tt_backend.zip\",
-    \"packaged_count\": \"${#packaged_files[@]}\",
-    \"packaged_files\": [\"$packaged_files_string\"]
-}" | jq .
+# Output final JSON result using jq for guaranteed valid JSON
+jq -n \
+    --arg status "success" \
+    --arg message "Backend package created and uploaded to S3" \
+    --arg environment "$env" \
+    --arg bucket "$bucket_name" \
+    --arg version_id "$version_id" \
+    --arg s3_key "tt_backend.zip" \
+    --arg packaged_count "$(find "$temp_dir/backend" -type f | wc -l)" \
+    --argjson packaged_files "$packaged_files" \
+    '{
+        status: $status,
+        message: $message,
+        environment: $environment,
+        bucket: $bucket,
+        version_id: $version_id,
+        s3_key: $s3_key,
+        packaged_count: $packaged_count,
+        packaged_files: $packaged_files
+    }'
