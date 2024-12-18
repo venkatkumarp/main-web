@@ -4,29 +4,79 @@ import subprocess
 import sys
 import json
 import os
+import traceback
+
+def run_command(cmd, check=True, capture_output=False):
+    """
+    Run a command with error handling
+    """
+    try:
+        result = subprocess.run(
+            cmd, 
+            check=check, 
+            capture_output=capture_output, 
+            text=True
+        )
+        return result
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Command failed: {cmd}\nError: {e.stderr}")
 
 def main():
-    # Read input from Terraform
-    input_data = json.load(sys.stdin)
-    environment = input_data.get("environment")
-    bucket_name = input_data.get("bucket_name")
-    output_path = input_data.get("output_path")
+    result = {
+        "status": "failure",
+        "message": "Unknown error",
+        "output_path": "",
+        "bucket_name": ""
+    }
 
-    # Execute the commands
     try:
-        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
-        subprocess.run(["poetry", "install"], shell=True, check=True)
-        subprocess.run(["chmod", "+x", "./backend/export-deps.sh"], shell=True, check=True)
-        subprocess.run(["./backend/export-deps.sh"], shell=True, check=True)
-        subprocess.run(["pip", "install", "-r", "requirements.txt"], shell=True, check=True)
+        # Read input from Terraform
+        input_data = json.load(sys.stdin)
+        environment = input_data.get("environment")
+        bucket_name = input_data.get("bucket_name")
+        output_path = input_data.get("output_path")
+
+        # Ensure virtual environment exists
+        venv_dir = ".venv"
+        if not os.path.exists(venv_dir):
+            print(f"Creating virtual environment at {venv_dir}")
+            run_command(["python3", "-m", "venv", venv_dir])
+
+        # Activate the virtual environment (note: use the appropriate path for your system)
+        venv_python = os.path.join(venv_dir, "bin", "python")
+        venv_pip = os.path.join(venv_dir, "bin", "pip")
+
+        # Install Poetry in the virtual environment
+        print("Installing poetry...")
+        run_command([venv_pip, "install", "--upgrade", "poetry"])
+
+        # Check if poetry was installed successfully (for debugging purposes)
+        result = subprocess.run([venv_python, "-m", "poetry", "--version"], capture_output=True, text=True, shell=True)
+        print("Poetry version:", result.stdout)  # Debugging output
+
+        # Install project dependencies with poetry
+        print("Running poetry install...")
+        run_command([venv_python, "-m", "poetry", "install"])
+
+        # Ensure export script is executable
+        run_command(["chmod", "+x", "./backend/export-deps.sh"])
+
+        # Run export script
+        run_command(["./backend/export-deps.sh"])
+
+        # Install additional requirements if needed
+        run_command([venv_python, "-m", "pip", "install", "-r", "requirements.txt"])
 
         # Zip the backend folder
-        subprocess.run(["zip", "-r", output_path, "."], shell=True, check=True)
+        run_command(["zip", "-r", output_path, "."], shell=True, check=True)
 
-        # Upload the zip file to S3 using AWS CLI
-        subprocess.run(["aws", "s3", "cp", output_path, f"s3://{bucket_name}/backend.zip"], shell=True, check=True)
+        # Upload to S3
+        run_command([
+            "aws", "s3", "cp", 
+            output_path, 
+            f"s3://{bucket_name}/backend.zip"
+        ])
 
-        # Return result to Terraform
         result = {
             "output_path": output_path,
             "bucket_name": bucket_name,
@@ -40,7 +90,7 @@ def main():
             "message": f"Error: {str(e)}"
         }
 
-    # Return result as JSON
+    # Print the result as JSON (required for Terraform)
     print(json.dumps(result))
 
 if __name__ == "__main__":
