@@ -5,8 +5,12 @@ import sys
 import json
 import os
 import shutil
+import logging
 
 def main():
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+
     # Read input from Terraform
     input_data = json.load(sys.stdin)
     environment = input_data.get("environment")
@@ -18,7 +22,7 @@ def main():
         try:
             subprocess.run(["poetry", "--version"], shell=True, check=True)
         except subprocess.CalledProcessError:
-            print("Poetry not found. Installing Poetry...")
+            logging.info("Poetry not found. Installing Poetry...")
             subprocess.run(["python3", "-m", "pip", "install", "--user", "poetry"], shell=True, check=True)
 
         # Install dependencies using Poetry globally
@@ -74,7 +78,7 @@ def main():
     try:
         print(json.dumps(result))
     except Exception as json_error:
-        print(f"JSON encoding failed: {str(json_error)}", file=sys.stderr)
+        logging.error(f"JSON encoding failed: {str(json_error)}")
         sys.exit(1)
 
 if __name__ == "__main__":
