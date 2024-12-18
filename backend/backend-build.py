@@ -13,46 +13,44 @@ def main():
     bucket_name = input_data.get("bucket_name")
     output_path = input_data.get("output_path")
 
-    # Check if Poetry is installed, and install if necessary
     try:
-        subprocess.run(["poetry", "--version"], shell=True, check=True)
-    except subprocess.CalledProcessError:
-        print("Poetry not found. Installing Poetry...")
-        subprocess.run(["python3", "-m", "pip", "install", "--user", "poetry"], shell=True, check=True)
-
-    # Execute the commands
-    try:
-        # Try to install dependencies using poetry, and fall back to poetry lock if it fails
+        # Ensure Poetry is installed globally (if not, install it)
         try:
-            subprocess.run(["poetry", "install"], shell=True, check=True)
+            subprocess.run(["poetry", "--version"], shell=True, check=True)
         except subprocess.CalledProcessError:
-            subprocess.run(["poetry", "lock"], shell=True, check=True)
-            subprocess.run(["poetry", "install"], shell=True, check=True)
+            print("Poetry not found. Installing Poetry...")
+            subprocess.run(["python3", "-m", "pip", "install", "--user", "poetry"], shell=True, check=True)
 
+        # Install dependencies using Poetry globally
+        subprocess.run(["poetry", "install"], shell=True, check=True)
+
+        # Ensure the shell script is executable and run it
         subprocess.run(["chmod", "+x", "./export-deps.sh"], shell=True, check=True)
         subprocess.run(["./export-deps.sh"], shell=True, check=True)
+
+        # Install other dependencies from requirements.txt globally
         subprocess.run(["pip", "install", "-r", "requirements.txt"], shell=True, check=True)
 
-        # Get the path to site-packages in the virtual environment
-        venv_site_packages = subprocess.check_output(
-            ["python3", "-c", "import site; print(site.getsitepackages()[0])"], 
+        # Get global site-packages directory (system-wide packages)
+        global_site_packages = subprocess.check_output(
+            ["python3", "-c", "import site; print(site.getsitepackages()[0])"],
             universal_newlines=True
         ).strip() + "/site-packages"
 
-        # Create a directory to store the backend build (excluding venv)
+        # Create a build directory to store the packaged backend contents
         build_dir = "build"
         if os.path.exists(build_dir):
             shutil.rmtree(build_dir)
         os.makedirs(build_dir)
 
-        # Copy site-packages into the build directory
-        if os.path.exists(venv_site_packages):
-            shutil.copytree(venv_site_packages, os.path.join(build_dir, "site-packages"))
+        # Copy global site-packages to the build directory
+        if os.path.exists(global_site_packages):
+            shutil.copytree(global_site_packages, os.path.join(build_dir, "site-packages"))
 
-        # Now copy the backend contents, excluding venv directory
+        # Copy other backend files, excluding the venv directory
         subprocess.run(["rsync", "-av", "--exclude", "venv", ".", build_dir], shell=True, check=True)
 
-        # Zip the contents of the backend excluding venv
+        # Zip the contents of the backend, excluding venv
         subprocess.run(["zip", "-r", output_path, ".", "-x", "venv/*"], shell=True, check=True)
 
         # Upload the zip file to S3 using AWS CLI
@@ -72,8 +70,12 @@ def main():
             "message": f"Error: {str(e)}"
         }
 
-    # Print valid JSON result for Terraform
-    print(json.dumps(result))
+    # Ensure the result is valid JSON
+    try:
+        print(json.dumps(result))
+    except Exception as json_error:
+        print(f"JSON encoding failed: {str(json_error)}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
