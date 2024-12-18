@@ -54,9 +54,10 @@ jobs:
          # python -m pip install --upgrade pip poetry
           python -m pip install --upgrade poetry
           poetry install || (poetry lock && poetry install)
-          chmod +x ./backend/export-deps.sh
-          ./backend/export-deps.sh
-          pip install -r ./backend/requirements.txt
+          chmod +x ./export-deps.sh
+          ./export-deps.sh
+          pip install -r requirements.txt
+        working-directory: ./backend 
           
       - name: Identify Modified Directory
         id: set_dir
