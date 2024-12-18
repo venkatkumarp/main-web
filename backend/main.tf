@@ -96,7 +96,7 @@ locals {
 ################################################################
 
 data "external" "backend_package" {
-  program = ["bash", "${path.module}/backend-build.sh"]
+  program = ["bash", "${path.module}/backend-build.py"]
 
   query = {
     environment = local.environment
