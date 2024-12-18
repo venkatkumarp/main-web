@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Determine the script's directory# Determine the script's directory
+# Determine the script's directory
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Read input data
