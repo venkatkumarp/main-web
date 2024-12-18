@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ## Check for required commands
-command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
-command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}'; exit 1; }
+command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}'; exit 1; }
 
 # Load JSON input using jq
 input_data=$(cat)
@@ -14,7 +14,7 @@ output_path=$(echo "$input_data" | jq -r '.output_path // empty')
 # Function for error handling that outputs valid JSON
 error_exit() {
     escaped_error=$(echo "$1" | jq -R .)
-    echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
+    echo "{\"status\": \"error\", \"message\": ${escaped_error}}"
     exit 1
 }
 
@@ -55,28 +55,22 @@ pip install -r requirements.txt
 
 # Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev* >&2; then
+if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev*; then
     error_exit "Failed to create ZIP file"
 fi
 
 # Upload to S3 as test_backend.zip
-if aws s3 cp "$output_path" "s3://$bucket_name/test_backend.zip" \
-    --metadata "environment=$env" >&2; then
-    echo "Successfully uploaded backend package to S3 as test_backend.zip" >&2
-else
+if ! aws s3 cp "$output_path" "s3://$bucket_name/test_backend.zip" --metadata "environment=$env"; then
     error_exit "Failed to upload backend package to S3"
 fi
 
 # Retrieve version ID of uploaded object
-version_id=$(aws s3api head-object \
-    --bucket "$bucket_name" \
-    --key "test_backend.zip" \
-    --query 'VersionId' \
-    --output text 2>/dev/null) || error_exit "Failed to get version ID"
+version_id=$(aws s3api head-object --bucket "$bucket_name" --key "test_backend.zip" --query 'VersionId' --output text 2>/dev/null) || error_exit "Failed to get version ID"
 
 # Get list of packaged files
 packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
 packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
+
 # Output final JSON result
 echo "{
     \"status\": \"success\",
