@@ -72,7 +72,7 @@ def main():
             "message": f"Error: {str(e)}"
         }
 
-    # Return result as JSON
+    # Print valid JSON result for Terraform
     print(json.dumps(result))
 
 if __name__ == "__main__":
