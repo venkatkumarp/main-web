@@ -63,10 +63,11 @@ def main():
         run_command([venv_python, "-m", "poetry", "install"])
 
         # Ensure export script is executable
-        run_command(["chmod", "+x", "./export-deps.sh"])
+        run_command(["chmod", "+x", "./backend/export-deps.sh"])
 
-        # Run export script
-        run_command(["./export-deps.sh"])
+        # Run the export script using the virtual environment's poetry
+        print("Running export-deps.sh...")
+        run_command(["./backend/export-deps.sh"])
 
         # Install additional requirements if needed
         run_command([venv_python, "-m", "pip", "install", "-r", "requirements.txt"])
