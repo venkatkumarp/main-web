@@ -16,7 +16,8 @@ variable "aws_account_id" {
 ###############################################
 
 terraform {
-  backend "s3" {}
+  backend "s3" {
+  }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -36,7 +37,10 @@ locals {
 provider "aws" {
   region = local.aws_region
   ignore_tags {
-    key_prefixes = ["bayer:", "mon:"]
+    key_prefixes = [
+      "bayer:",
+      "mon:"
+    ]
   }
   assume_role {
     role_arn = local.aws_infra_deploy_role
@@ -46,13 +50,16 @@ provider "aws" {
   }
 }
 
+
 ###############################################
 ##                                           ##
 ##  Local Variables Configuration            ##
 ##                                           ##
 ###############################################
 
+
 locals {
+
   project_name = "time-tracking"
 
   environment        = lookup(local.environments, var.aws_account_id, "none")
@@ -60,27 +67,30 @@ locals {
 
   environments = {
     "440744244651" = "dev"
-    "423623838336" = "prod"
   }
 
   suffixes = {
     "440744244651" = "dev"
-    "423623838336" = "prod"
   }
 
   aws_region = "eu-central-1"
+
+
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
-  # Lookup lambda function name and ECR repo name based on the account ID
-  lambda_function_name = lookup({
+  # Mapping of account IDs to Lambda function names
+  lambda_function_names = lookup({
     "440744244651" = "docker-lambda"
-    "423623838336" = "tfprodbc"
-  }, var.aws_account_id, "null")  
+  }, var.aws_account_id, null)
 
-  ecr_repo_name = lookup({
+  # Mapping of account IDs to ECR repositories
+  ecr_repo_names = lookup({
     "440744244651" = "test-repo"
-    "423623838336" = "tfprodbc"
-  }, var.aws_account_id, "null") 
+  }, var.aws_account_id, null)
+
+  image_tags = lookup({
+    "dev" = "api-latest"
+  }, var.aws_account_id, null)
 }
 
 ################################################################
@@ -93,9 +103,12 @@ data "external" "backend_deploy" {
   program = ["bash", "${path.module}/backend-build.sh"]
 
   query = {
-    environment        = local.environment
-    lambda_function_name = local.lambda_function_name
-    ecr_repo_name        = local.ecr_repo_name
+    environment          = local.environment
+    lambda_function_name = local.lambda_function_names
+    ecr_repo_name        = local.ecr_repo_names
+    ecr_registry         = "${var.aws_account_id}.dkr.ecr.${local.aws_region}.amazonaws.com"
+    image_tag            = local.image_tags
+    region               = local.aws_region
   }
 }
 
@@ -103,24 +116,19 @@ data "external" "backend_deploy" {
 ##                                                            ##
 ##  Outputs from the Frontend Build Process                   ##
 ##                                                            ##
-###############################################################
+################################################################
 
-/*output "docker_image_status" {
-  value       = data.external.backend_package.result.status  # Corrected reference
-  description = "Status of the Docker image build and deployment"
+output "backend_deploy_status" {
+  description = "Status of the backend deployment"
+  value       = data.external.backend_deploy.result.status
 }
 
-output "lambda_function_name" {
-  value       = local.lambda_function_name[var.aws_account_id]  # Access specific lambda name
-  description = "Name of the Lambda function used for deployment"
+output "backend_deployed_lambda_function" {
+  description = "Name of the Lambda function deployed"
+  value       = data.external.backend_deploy.result.lambda_function
 }
 
-output "image_uri" {
-  value       = data.external.backend_package.result.image_uri  # Corrected reference
-  description = "URI of the Docker image pushed to ECR"
+output "backend_deployed_image_tag" {
+  description = "Image tag of the deployed backend"
+  value       = data.external.backend_deploy.result.image_tag
 }
-
-output "ecr_repo_name" {
-  value       = local.ecr_repo_name[var.aws_account_id]  # Access specific ECR repo name
-  description = "The name of the ECR repository"
-}*/
