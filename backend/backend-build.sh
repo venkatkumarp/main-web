@@ -77,7 +77,6 @@ version_id=$(aws s3api head-object \
 # Get list of packaged files
 packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
 packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
-
 # Output final JSON result
 echo "{
     \"status\": \"success\",
