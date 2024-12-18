@@ -15,27 +15,26 @@ def create_virtual_environment():
         venv.create(venv_path, with_pip=True)
     return venv_path
 
-def activate_virtual_environment(venv_path):
+def run_command(cmd, capture_output=False):
     """
-    Activate the virtual environment
+    Run a command with error handling
     """
-    activate_this = os.path.join(venv_path, 'bin', 'activate_this.py')
-    
     try:
-        exec(open(activate_this).read(), {'__file__': activate_this})
-    except FileNotFoundError:
-        # Fallback for Windows
-        activate_this = os.path.join(venv_path, 'Scripts', 'activate_this.py')
-        if os.path.exists(activate_this):
-            exec(open(activate_this).read(), {'__file__': activate_this})
+        if capture_output:
+            return subprocess.run(cmd, check=True, capture_output=True, text=True)
+        else:
+            return subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed: {cmd}")
+        print(f"Error output: {e.stderr}")
+        raise
 
 def main():
-    # Initialize result dictionary with default failure state
     result = {
         "status": "failure",
-        "message": "Unknown error occurred",
+        "message": "Unknown error",
         "output_path": "",
-        "bucket_name": "",
+        "bucket_name": ""
     }
 
     try:
@@ -45,42 +44,45 @@ def main():
         bucket_name = input_data.get("bucket_name", "")
         output_path = input_data.get("output_path", "backend.zip")
 
-        # Create and activate virtual environment
+        # Create virtual environment
         venv_path = create_virtual_environment()
-        activate_virtual_environment(venv_path)
 
-        # Full paths to executables in virtual environment
-        pip_path = os.path.join(venv_path, 'bin', 'pip')
-        poetry_path = os.path.join(venv_path, 'bin', 'poetry')
+        # Activate virtual environment and set up Poetry
+        poetry_env_cmd = [
+            f"{venv_path}/bin/python", "-m", "pip", "install", 
+            "--upgrade", "poetry"
+        ]
+        run_command(poetry_env_cmd)
 
-        # Suppress all print outputs
-        with open(os.devnull, 'w') as devnull:
-            # Install Poetry
-            subprocess.run([pip_path, 'install', 'poetry'], 
-                           stdout=devnull, stderr=devnull, check=True)
+        # Verify Poetry installation
+        poetry_path = f"{venv_path}/bin/poetry"
+        run_command([poetry_path, "--version"])
 
-            # Poetry install commands
-            subprocess.run([poetry_path, 'lock'], 
-                           stdout=devnull, stderr=devnull, check=True)
-            subprocess.run([poetry_path, 'install'], 
-                           stdout=devnull, stderr=devnull, check=True)
+        # Install project dependencies
+        run_command([poetry_path, "install"])
 
-            # Make export script executable
-            subprocess.run(['chmod', '+x', './export-deps.sh'], check=True)
-            subprocess.run(['./export-deps.sh'], check=True)
+        # Verify export-deps.sh exists and is executable
+        if not os.path.exists("./export-deps.sh"):
+            raise FileNotFoundError("export-deps.sh script not found")
+        
+        # Make sure the script is executable
+        run_command(["chmod", "+x", "./export-deps.sh"])
 
-            # Install requirements
-            subprocess.run([pip_path, 'install', '-r', 'requirements.txt'], 
-                           stdout=devnull, stderr=devnull, check=True)
+        # Run export-deps.sh with verbose output
+        export_output = run_command(["./export-deps.sh"], capture_output=True)
+        print("Export dependencies output:", export_output.stdout)
 
-            # Zip backend
-            subprocess.run(['zip', '-r', output_path, '.'], check=True)
+        # Zip the backend
+        run_command(["zip", "-r", output_path, "."])
 
-            # Upload to S3
-            subprocess.run(['aws', 's3', 'cp', output_path, 
-                            f's3://{bucket_name}/backend.zip'], check=True)
+        # Upload to S3
+        run_command([
+            "aws", "s3", "cp", 
+            output_path, 
+            f"s3://{bucket_name}/backend.zip"
+        ])
 
-        # Update result on success
+        # Success result
         result = {
             "status": "success",
             "message": "Backend packaging and upload successful",
@@ -89,7 +91,7 @@ def main():
         }
 
     except Exception as e:
-        # Capture any errors
+        # Capture detailed error information
         result = {
             "status": "failure",
             "message": str(e),
@@ -98,7 +100,6 @@ def main():
         }
 
     # Ensure only JSON is printed
-    sys.stderr = open(os.devnull, 'w')
     print(json.dumps(result))
 
 if __name__ == "__main__":
