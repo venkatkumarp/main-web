@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-
+set -x
 # Debugging output to show script progress
 echo "Starting backend-build.sh"
 
