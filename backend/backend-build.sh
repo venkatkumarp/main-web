@@ -96,6 +96,7 @@ packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
 packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
 # Output final JSON result
+# Ensuring the final output is valid JSON
 echo "{
     \"status\": \"success\",
     \"message\": \"Backend package created and uploaded to S3\",
@@ -104,5 +105,5 @@ echo "{
     \"version_id\": \"$version_id\",
     \"s3_key\": \"tt_backend.zip\",
     \"packaged_count\": \"${#packaged_files[@]}\",
-    \"packaged_files\": [$packaged_files_string]
-}"
+    \"packaged_files\": [\"$packaged_files_string\"]
+}" | jq .
