@@ -89,7 +89,7 @@ locals {
 ##                                                            ##
 ################################################################
 
-data "external" "backend_package" {
+data "external" "backend_deploy" {
   program = ["bash", "${path.module}/backend-build.sh"]
 
   query = {
