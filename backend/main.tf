@@ -85,13 +85,11 @@ locals {
     "440744244651" = "docker-lambda"
     "423623838336" = "tfprodbc"
   }
-  lambda_function_name = lookup(local.lambda_function_name, var.aws_account_id, "null")
 
   ecr_repo_name = {
     "440744244651" = "test-repo"
     "423623838336" = "tfprodbc"
   }
-  ecr_repo_name = lookup(local.ecr_repo_name, var.aws_account_id, "null")
 }
 
 ################################################################
