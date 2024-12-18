@@ -4,6 +4,7 @@ set -euo pipefail
 # Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
+command -v poetry >/dev/null 2>&1 || { echo '{"error": "Poetry is not installed"}' >&2; exit 1; }
 
 # Load JSON input using jq
 input_data=$(cat)
@@ -45,24 +46,24 @@ fi
 # Create temporary copy of backend folder
 cp -r "$backend_folder" "$temp_dir/backend"
 
-# Ensure that Python packages (installed in virtualenv) are included
+# Step 1: Export dependencies from Poetry to requirements.txt
 cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
+echo "Exporting dependencies from Poetry to requirements.txt..."
+poetry export --without-hashes -o requirements.txt
 
-# Check if the virtual environment exists
-if [ -d "venv/lib/python*/site-packages" ]; then
-    site_packages_dir="venv/lib/python*/site-packages"
-    cp -r "$site_packages_dir" "$temp_dir/backend"
-else
-    error_exit "Virtual environment not found. Please ensure dependencies are installed in the virtual environment."
-fi
+# Step 2: Create a Python virtual environment
+echo "Creating virtual environment in $temp_dir/venv"
+python3 -m venv "$temp_dir/venv"
 
-# Create ZIP file from temporary directory
-cd "$temp_dir" || error_exit "Failed to change to temporary directory"
-if ! zip -r "$output_path" backend >&2; then
-    error_exit "Failed to create ZIP file"
-fi
+# Step 3: Install dependencies into the virtual environment
+echo "Installing dependencies into the virtual environment..."
+"$temp_dir/venv/bin/pip" install -r "$temp_dir/backend/requirements.txt"
 
-# Upload to S3 as tt_backend.zip
+# Step 4: Include the virtual environment and backend code in the zip
+echo "Zipping backend code and virtual environment..."
+zip -r "$output_path" "$temp_dir/backend" "$temp_dir/venv" -x "*.git/*" "*.terraform/*" "*.env" "*.gitignore"  # Exclude unnecessary files
+
+# Step 5: Upload to S3 as tt_backend.zip
 if aws s3 cp "$output_path" "s3://$bucket_name/tt_backend.zip" \
     --metadata "environment=$env" >&2; then
     echo "Successfully uploaded backend package to S3 as tt_backend.zip" >&2
@@ -70,14 +71,14 @@ else
     error_exit "Failed to upload backend package to S3"
 fi
 
-# Retrieve version ID of uploaded object
+# Step 6: Retrieve version ID of uploaded object
 version_id=$(aws s3api head-object \
     --bucket "$bucket_name" \
     --key "tt_backend.zip" \
     --query 'VersionId' \
     --output text 2>/dev/null) || error_exit "Failed to get version ID"
 
-# Get list of packaged files
+# Step 7: Get list of packaged files
 packaged_files=($(find "$temp_dir/backend" -type f -printf "%P\n"))
 packaged_files_string=$(printf '%s,' "${packaged_files[@]}" | sed 's/,$//')
 
