@@ -129,7 +129,7 @@ output "backend_code_version" {
   description = "Version ID of the uploaded backend code package"
 }*/
 
-output "backend_status" {
+/*output "backend_status" {
   value       = data.external.backend_package.result.status
   description = "Status of the backend packaging and upload process"
 }
@@ -137,4 +137,4 @@ output "backend_status" {
 output "backend_message" {
   value       = data.external.backend_package.result.message
   description = "Detailed message about the backend packaging process"
-}
+}*/
