@@ -4,11 +4,10 @@ import subprocess
 import sys
 import json
 import os
-import traceback
 
 def run_command(cmd, check=True, capture_output=False):
     """
-    Run a command with error handling
+    Run a command with error handling and optional output capture.
     """
     try:
         result = subprocess.run(
@@ -19,10 +18,10 @@ def run_command(cmd, check=True, capture_output=False):
         )
         return result
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Command failed: {cmd}\nError: {e.stderr}")
+        # Capture error message and include it in the result
+        return f"Command failed: {cmd}\nError: {e.stderr}"
 
 def main():
-    # Prepare a default result dictionary
     result = {
         "status": "failure",
         "message": "Unknown error",
@@ -49,19 +48,22 @@ def main():
         run_command([venv_pip, "install", "--upgrade", "poetry"])
 
         # Install project dependencies
-        run_command([".venv/bin/poetry", "install"])
+        run_command([venv_python, "-m", "poetry", "install"])
 
         # Ensure export script is executable
         run_command(["chmod", "+x", "./export-deps.sh"])
 
         # Run export script
-        run_command(["./export-deps.sh"])
+        export_result = run_command(["./export-deps.sh"], capture_output=True)
+
+        if isinstance(export_result, str) and export_result.startswith("Command failed"):
+            raise RuntimeError(export_result)
 
         # Create backend zip
-        run_command(["zip", "-r", output_path, "."])
+        zip_result = run_command(["zip", "-r", output_path, "."])
 
         # Upload to S3
-        run_command([
+        upload_result = run_command([
             "aws", "s3", "cp", 
             output_path, 
             f"s3://{bucket_name}/backend.zip"
@@ -76,7 +78,7 @@ def main():
         }
 
     except Exception as e:
-        # Capture error details
+        # Handle exceptions and capture error details
         result = {
             "status": "failure",
             "message": str(e),
@@ -84,7 +86,7 @@ def main():
             "bucket_name": ""
         }
 
-    # Ensure the result is printed in proper JSON format
+    # Print only JSON output to ensure Terraform can process it
     print(json.dumps(result))
 
 if __name__ == "__main__":
