@@ -13,16 +13,22 @@ def main():
     bucket_name = input_data.get("bucket_name")
     output_path = input_data.get("output_path")
 
-    # Ensure Poetry is installed
+    # Check if Poetry is installed, and install if necessary
     try:
-        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error installing poetry: {str(e)}")
-        sys.exit(1)
+        subprocess.run(["poetry", "--version"], shell=True, check=True)
+    except subprocess.CalledProcessError:
+        print("Poetry not found. Installing Poetry...")
+        subprocess.run(["python3", "-m", "pip", "install", "--user", "poetry"], shell=True, check=True)
 
     # Execute the commands
     try:
-        subprocess.run(["poetry", "install"], shell=True, check=True)
+        # Try to install dependencies using poetry, and fall back to poetry lock if it fails
+        try:
+            subprocess.run(["poetry", "install"], shell=True, check=True)
+        except subprocess.CalledProcessError:
+            subprocess.run(["poetry", "lock"], shell=True, check=True)
+            subprocess.run(["poetry", "install"], shell=True, check=True)
+
         subprocess.run(["chmod", "+x", "./export-deps.sh"], shell=True, check=True)
         subprocess.run(["./export-deps.sh"], shell=True, check=True)
         subprocess.run(["pip", "install", "-r", "requirements.txt"], shell=True, check=True)
