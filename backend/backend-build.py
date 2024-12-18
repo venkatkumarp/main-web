@@ -30,10 +30,6 @@ def main():
         "bucket_name": ""
     }
 
-    # Redirect all standard output and error to /dev/null
-    sys.stdout = open(os.devnull, 'w')
-    sys.stderr = open(os.devnull, 'w')
-
     try:
         # Read input from Terraform
         input_data = json.load(sys.stdin)
@@ -88,12 +84,8 @@ def main():
             "bucket_name": ""
         }
 
-    # Reopen stdout to ensure clean JSON output
-    sys.stdout = sys.__stdout__
-    
-    # Print only JSON
+    # Ensure the result is printed in proper JSON format
     print(json.dumps(result))
-    return 0
 
 if __name__ == "__main__":
     sys.exit(main())
