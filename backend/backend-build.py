@@ -1,37 +1,47 @@
-import json
-import os
+#!/usr/bin/env python3
+
 import subprocess
 import sys
+import json
+import os
 
-# Function to handle script execution and return the JSON response
-def execute():
+def main():
+    # Read input from Terraform
+    input_data = json.load(sys.stdin)
+    environment = input_data.get("environment")
+    bucket_name = input_data.get("bucket_name")
+    output_path = input_data.get("output_path")
+
+    # Execute the commands
     try:
-        # Extract the arguments passed from Terraform
-        environment = sys.argv[1]
-        bucket_name = sys.argv[2]
-        output_path = sys.argv[3]
-        
-        # Change directory to 'backend' folder
-        os.chdir('backend')
+        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
+        subprocess.run(["poetry", "install"], shell=True, check=True)
+        subprocess.run(["chmod", "+x", "./export-deps.sh"], shell=True, check=True)
+        subprocess.run(["./export-deps.sh"], shell=True, check=True)
+        subprocess.run(["pip", "install", "-r", "requirements.txt"], shell=True, check=True)
 
-        # Run the shell commands as per your original request
-        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], check=True)
-        subprocess.run(["poetry", "install"], check=True)
-        subprocess.run(["chmod", "+x", "./export-deps.sh"], check=True)
-        subprocess.run(["./export-deps.sh"], check=True)
-        subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
+        # Zip the backend folder
+        subprocess.run(["zip", "-r", output_path, "."], shell=True, check=True)
 
-        # Zip the backend directory
-        subprocess.run(["zip", "-r", output_path, "."], check=True)
+        # Upload the zip file to S3 using AWS CLI
+        subprocess.run(["aws", "s3", "cp", output_path, f"s3://{bucket_name}/backend.zip"], shell=True, check=True)
 
-        # Return the output path to Terraform
-        return json.dumps({"output_path": output_path, "bucket_name": bucket_name})
-    
-    except Exception as e:
-        # Handle errors and print error message to Terraform
-        print(f"Error: {str(e)}", file=sys.stderr)
-        sys.exit(1)
+        # Return result to Terraform
+        result = {
+            "output_path": output_path,
+            "bucket_name": bucket_name,
+            "status": "success",
+            "message": "Backend packaging and upload successful"
+        }
 
-# Call the function
+    except subprocess.CalledProcessError as e:
+        result = {
+            "status": "failure",
+            "message": f"Error: {str(e)}"
+        }
+
+    # Return result as JSON
+    print(json.dumps(result))
+
 if __name__ == "__main__":
-    execute()
+    main()
