@@ -113,7 +113,7 @@ data "external" "backend_package" {
 ##                                                            ##
 ################################################################
 
-output "backend_code_bucket" {
+/*output "backend_code_bucket" {
   value       = data.external.backend_package.result.bucket
   description = "Name of the S3 bucket containing the backend code"
 }
@@ -126,7 +126,7 @@ output "backend_code_key" {
 output "backend_code_version" {
   value       = data.external.backend_package.result.version_id
   description = "Version ID of the uploaded backend code package"
-}
+}*/
 
 output "backend_status" {
   value       = data.external.backend_package.result.status
