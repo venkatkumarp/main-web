@@ -14,10 +14,22 @@ def main():
 
     # Execute the commands
     try:
+        # Upgrade Poetry if necessary
         subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
-        subprocess.run(["poetry", "install"], shell=True, check=True)
+
+        # Try to install dependencies with poetry
+        try:
+            subprocess.run(["poetry", "install"], shell=True, check=True)
+        except subprocess.CalledProcessError:
+            print("Poetry install failed, trying 'poetry lock && poetry install'")
+            subprocess.run(["poetry", "lock"], shell=True, check=True)
+            subprocess.run(["poetry", "install"], shell=True, check=True)
+
+        # Make the shell script executable and run it
         subprocess.run(["chmod", "+x", "./export-deps.sh"], shell=True, check=True)
         subprocess.run(["./export-deps.sh"], shell=True, check=True)
+
+        # Install other dependencies from requirements.txt
         subprocess.run(["pip", "install", "-r", "requirements.txt"], shell=True, check=True)
 
         # Zip the backend folder
