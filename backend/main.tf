@@ -71,15 +71,16 @@ locals {
   aws_region = "eu-central-1"
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
-  lambda_function_name = {
+  # Lookup lambda function name and ECR repo name based on the account ID
+  lambda_function_name = lookup({
     "440744244651" = "docker-lambda"
     "423623838336" = "tfprodbc"
-  }
+  }, var.aws_account_id, "null")  
 
-  ecr_repo_name = {
+  ecr_repo_name = lookup({
     "440744244651" = "test-repo"
     "423623838336" = "tfprodbc"
-  }
+  }, var.aws_account_id, "null") 
 }
 
 ################################################################
@@ -93,8 +94,8 @@ data "external" "backend_package" {
 
   query = {
     environment        = local.environment
-    lambda_function_name = local.lambda_function_name[var.aws_account_id]  # Corrected value
-    ecr_repo_name        = local.ecr_repo_name[var.aws_account_id]  # Corrected value
+    lambda_function_name = local.lambda_function_name[var.aws_account_id]  
+    ecr_repo_name        = local.ecr_repo_name[var.aws_account_id]  
   }
 }
 
