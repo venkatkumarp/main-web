@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-## Check for required commands
+# Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
 
@@ -45,6 +45,17 @@ fi
 # Create temporary copy of backend folder
 cp -r "$backend_folder" "$temp_dir/backend"
 
+# Ensure that Python packages (installed in virtualenv) are included
+cd "$temp_dir/backend" || error_exit "Failed to change to backend directory"
+
+# Check if the virtual environment exists
+if [ -d "venv/lib/python*/site-packages" ]; then
+    site_packages_dir="venv/lib/python*/site-packages"
+    cp -r "$site_packages_dir" "$temp_dir/backend"
+else
+    error_exit "Virtual environment not found. Please ensure dependencies are installed in the virtual environment."
+fi
+
 # Create ZIP file from temporary directory
 cd "$temp_dir" || error_exit "Failed to change to temporary directory"
 if ! zip -r "$output_path" backend >&2; then
@@ -79,5 +90,5 @@ echo "{
     \"version_id\": \"$version_id\",
     \"s3_key\": \"tt_backend.zip\",
     \"packaged_count\": \"${#packaged_files[@]}\",
-    \"packaged_files\": \"$packaged_files_string\"
+    \"packaged_files\": [$packaged_files_string]
 }"
