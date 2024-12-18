@@ -81,12 +81,17 @@ locals {
 
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
-  bucket_names = {
-    "440744244651" = "web.dev.times-tracking.int.venkat.com"
+  lambda_function_name = {
+    "440744244651" = "docker-lambda"
     "423623838336" = "tfprodbc"
   }
-  bucket_name = lookup(local.bucket_names, var.aws_account_id, "invalid-bucket")
+  lambda_function_name = lookup(local.lambda_function_name, var.aws_account_id, "null")
 
+  ecr_repo_name = {
+    "440744244651" = "test-repo"
+    "423623838336" = "tfprodbc"
+  }
+  ecr_repo_name = lookup(local.ecr_repo_name, var.aws_account_id, "null")
 }
 
 ################################################################
@@ -96,15 +101,12 @@ locals {
 ################################################################
 
 data "external" "backend_package" {
-  #program = ["python3", "${path.module}/backend-build.py"]
   program = ["bash", "${path.module}/backend-build.sh"]
 
   query = {
     environment = local.environment
-    bucket_name = local.bucket_name
-    output_path = "${path.module}/tt_backend.zip"
-    #output_path_layer   = "${path.module}/tt_lambda_layer.zip"
-    #output_path_function = "${path.module}/tt_lambda_function.zip"
+    lambda_function_name = local.lambda_function_name
+    ecr_repo_name        = local.ecr_repo_name
   }
 }
 
@@ -112,29 +114,24 @@ data "external" "backend_package" {
 ##                                                            ##
 ##  Outputs from the Frontend Build Process                   ##
 ##                                                            ##
-################################################################
+###############################################################
 
-output "backend_code_bucket" {
-  value       = data.external.backend_package.result.bucket
-  description = "Name of the S3 bucket containing the backend code"
+output "docker_image_status" {
+  value       = data.external.backend_deploy.result.status
+  description = "Status of the Docker image build and deployment"
 }
 
-output "backend_code_key" {
-  value       = data.external.backend_package.result.s3_key
-  description = "S3 key of the uploaded backend code package"
+output "lambda_function_name" {
+  value       = local.lambda_function_name
+  description = "Name of the Lambda function used for deployment"
 }
 
-output "backend_code_version" {
-  value       = data.external.backend_package.result.version_id
-  description = "Version ID of the uploaded backend code package"
+output "image_uri" {
+  value       = data.external.backend_deploy.result.image_uri
+  description = "URI of the Docker image pushed to ECR"
 }
 
-output "backend_status" {
-  value       = data.external.backend_package.result.status
-  description = "Status of the backend packaging and upload process"
-}
-
-output "backend_message" {
-  value       = data.external.backend_package.result.message
-  description = "Detailed message about the backend packaging process"
+output "ecr_repo_name" {
+  value       = local.ecr_repo_name
+  description = "The name of the ECR repository"
 }
