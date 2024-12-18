@@ -1,59 +1,39 @@
 #!/bin/bash
 set -euo pipefail
 
-# Check for required commands
-command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
-command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
+# Determine the script's directory
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Read input from Terraform
-# Read input from Terraform
-input_data=$(cat)
-env=$(echo "$input_data" | jq -r '.environment // empty')
-bucket_name=$(echo "$input_data" | jq -r '.bucket_name // empty')
-output_path=$(echo "$input_data" | jq -r '.output_path // empty')
-
-# Error handling function
-error_exit() {
-    escaped_error=$(echo "$1" | jq -R .)
-    echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
-    exit 1
-}
-
-# Validate input variables
-[ -z "$env" ] && error_exit "Environment variable is not set."
-[ -z "$bucket_name" ] && error_exit "Bucket name is not set."
-[ -z "$output_path" ] && error_exit "Output path is not set."
-
-# Create a temporary directory
-temp_dir=$(mktemp -d)
-trap 'rm -rf "$temp_dir"' EXIT
-
-# Verify the existence of the backend folder
-backend_folder="backend"
+# Verify the 'backend' folder relative to the script's directory
+backend_folder="${script_dir}"
 if [ ! -d "$backend_folder" ]; then
-    error_exit "No 'backend' folder found."
+    echo "Error: Backend folder not found in $backend_folder"
+    exit 1
 fi
 
-# Copy backend folder to temporary directory
-cp -r "$backend_folder" "$temp_dir/backend"
+# Change to the backend directory
+cd "$backend_folder" || { echo "Failed to change to backend directory"; exit 1; }
 
-# Change to backend directory and install dependencies
-cd "$temp_dir/backend" || error_exit "Failed to change to backend directory."
-python -m pip install --upgrade poetry || error_exit "Failed to install Poetry."
-poetry install || (poetry lock && poetry install) || error_exit "Failed to install dependencies using Poetry."
+# Install dependencies
+python -m pip install --upgrade poetry || { echo "Failed to install Poetry"; exit 1; }
+poetry install || (poetry lock && poetry install) || { echo "Failed to install dependencies using Poetry"; exit 1; }
 chmod +x ./export-deps.sh
-./export-deps.sh || error_exit "Failed to execute export-deps.sh."
-pip install -r requirements.txt || error_exit "Failed to install requirements.txt dependencies."
+./export-deps.sh || { echo "Failed to execute export-deps.sh"; exit 1; }
+pip install -r requirements.txt || { echo "Failed to install requirements.txt dependencies"; exit 1; }
 
 # Create a ZIP package
-cd "$temp_dir" || error_exit "Failed to change to temporary directory."
-if ! zip -r "$output_path" backend -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev*; then
-    error_exit "Failed to create ZIP file."
+temp_dir=$(mktemp -d)
+trap 'rm -rf "$temp_dir"' EXIT
+cd "$temp_dir" || { echo "Failed to change to temporary directory"; exit 1; }
+if ! zip -r "$output_path" "$backend_folder" -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev*; then
+    echo "Failed to create ZIP file"
+    exit 1
 fi
 
 # Upload to S3
 if ! aws s3 cp "$output_path" "s3://$bucket_name/test_backend.zip" --metadata "environment=$env"; then
-    error_exit "Failed to upload backend package to S3."
+    echo "Failed to upload backend package to S3"
+    exit 1
 fi
 
 # Output success result in JSON
