@@ -94,8 +94,8 @@ data "external" "backend_package" {
 
   query = {
     environment        = local.environment
-    lambda_function_name = local.lambda_function_name[var.aws_account_id]  
-    ecr_repo_name        = local.ecr_repo_name[var.aws_account_id]  
+    lambda_function_name = local.lambda_function_name
+    ecr_repo_name        = local.ecr_repo_name
   }
 }
 
