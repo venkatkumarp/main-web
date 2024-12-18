@@ -28,23 +28,12 @@ if [ ! -d "$backend_folder" ]; then
 fi
 cd "$backend_folder" || error_exit "Failed to change to backend directory."
 
-# Install Poetry and dependencies
-python -m pip install --upgrade poetry || error_exit "Failed to install Poetry."
-poetry self add poetry-plugin-export || error_exit "Failed to add poetry-plugin-export."
-poetry lock --no-update || error_exit "Failed to update poetry.lock."
-poetry install --no-root || error_exit "Failed to install dependencies using Poetry."
-
-# Run export-deps script
-chmod +x ./export-deps.sh
-./export-deps.sh || error_exit "Failed to execute export-deps.sh."
-
-# Install Python dependencies
-pip install -r requirements.txt || error_exit "Failed to install requirements.txt dependencies."
-
-# Create a ZIP package
+# Create a ZIP package of the backend folder (including installed dependencies)
 temp_dir=$(mktemp -d)
 trap 'rm -rf "$temp_dir"' EXIT
 cd "$temp_dir" || error_exit "Failed to change to temporary directory."
+
+# Exclude certain files while zipping
 if ! zip -r "$output_path" "$backend_folder" -x \*.tf \*sonar-project.properties \*backend-build.sh \*.terraform* \*dev*; then
     error_exit "Failed to create ZIP file."
 fi
