@@ -1,122 +1,49 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-import subprocess
-import sys
-import json
-import os
-import venv
+# Exit on any error
+set -e
 
-def create_virtual_environment():
-    """
-    Create a virtual environment if it doesn't exist
-    """
-    venv_path = ".venv"
-    if not os.path.exists(venv_path):
-        print(f"Creating virtual environment in {venv_path}")
-        venv.create(venv_path, with_pip=True)
-    return venv_path
+# Read inputs from Terraform
+ENVIRONMENT=$1
+BUCKET_NAME=$2
+OUTPUT_PATH=$3
 
-def activate_virtual_environment(venv_path):
-    """
-    Activate the virtual environment
-    """
-    # Construct paths for different operating systems
-    activate_this = os.path.join(venv_path, 'bin', 'activate_this.py')
-    
-    # Try to activate the virtual environment
-    try:
-        exec(open(activate_this).read(), {'__file__': activate_this})
-        print(f"Virtual environment activated from {activate_this}")
-    except FileNotFoundError:
-        # Fallback for Windows
-        activate_this = os.path.join(venv_path, 'Scripts', 'activate_this.py')
-        if os.path.exists(activate_this):
-            exec(open(activate_this).read(), {'__file__': activate_this})
-            print(f"Virtual environment activated from {activate_this}")
-        else:
-            print("Could not find virtual environment activation script")
+# Function to handle errors
+function handle_error {
+    echo "{\"status\":\"failure\", \"message\":\"Error: $1\"}"
+    exit 1
+}
 
-def install_poetry(venv_path):
-    """
-    Install Poetry in the virtual environment
-    """
-    poetry_install_cmd = [
-        os.path.join(venv_path, 'bin', 'pip'),
-        'install',
-        'poetry'
-    ]
-    
-    try:
-        subprocess.run(poetry_install_cmd, check=True)
-        print("Poetry installed successfully")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to install Poetry: {e}")
-        raise
+# Upgrade Poetry if necessary
+echo "Upgrading Poetry..."
+python3 -m pip install --upgrade poetry || handle_error "Failed to upgrade poetry"
 
-def main():
-    # Read input from Terraform
-    input_data = json.load(sys.stdin)
-    environment = input_data.get("environment")
-    bucket_name = input_data.get("bucket_name")
-    output_path = input_data.get("output_path")
+# Install dependencies with poetry, with fallback if needed
+echo "Installing dependencies with Poetry..."
+if ! poetry install; then
+    echo "Poetry install failed, running poetry lock and poetry install..."
+    poetry lock || handle_error "Poetry lock failed"
+    poetry install || handle_error "Poetry install failed after lock"
+fi
 
-    result = {}
+# Make the export-deps.sh executable and run it
+echo "Making export-deps.sh executable..."
+chmod +x ./export-deps.sh || handle_error "Failed to make export-deps.sh executable"
 
-    try:
-        # Create and activate virtual environment
-        venv_path = create_virtual_environment()
-        activate_virtual_environment(venv_path)
+echo "Running export-deps.sh..."
+./export-deps.sh || handle_error "Failed to execute export-deps.sh"
 
-        # Path to Poetry in virtual environment
-        poetry_path = os.path.join(venv_path, 'bin', 'poetry')
+# Install additional dependencies from requirements.txt
+echo "Installing dependencies from requirements.txt..."
+pip install -r requirements.txt || handle_error "Failed to install dependencies from requirements.txt"
 
-        # Install Poetry
-        install_poetry(venv_path)
+# Zip the backend folder
+echo "Zipping the backend folder into $OUTPUT_PATH..."
+zip -r $OUTPUT_PATH . || handle_error "Failed to zip the backend folder"
 
-        # Construct poetry commands using full path
-        poetry_install_cmd = [poetry_path, 'install']
-        poetry_lock_cmd = [poetry_path, 'lock']
+# Upload the zip file to S3
+echo "Uploading the zip file to S3..."
+aws s3 cp $OUTPUT_PATH s3://$BUCKET_NAME/backend.zip || handle_error "Failed to upload the zip file to S3"
 
-        # Try to install dependencies
-        try:
-            subprocess.run(poetry_install_cmd, check=True)
-        except subprocess.CalledProcessError:
-            # Fallback: try to lock dependencies first
-            subprocess.run(poetry_lock_cmd, check=True)
-            subprocess.run(poetry_install_cmd, check=True)
-
-        # Make the shell script executable and run it
-        subprocess.run(["chmod", "+x", "./export-deps.sh"], check=True)
-        subprocess.run(["./export-deps.sh"], check=True)
-
-        # Install other dependencies from requirements.txt
-        pip_path = os.path.join(venv_path, 'bin', 'pip')
-        subprocess.run([pip_path, 'install', '-r', 'requirements.txt'], check=True)
-
-        # Zip the backend folder
-        subprocess.run(["zip", "-r", output_path, "."], check=True)
-
-        # Upload the zip file to S3 using AWS CLI
-        subprocess.run(["aws", "s3", "cp", output_path, f"s3://{bucket_name}/backend.zip"], check=True)
-
-        # Populate the result dictionary
-        result = {
-            "output_path": output_path,
-            "bucket_name": bucket_name,
-            "status": "success",
-            "message": "Backend packaging and upload successful"
-        }
-
-    except Exception as e:
-        # Comprehensive error handling
-        result = {
-            "status": "failure",
-            "message": f"Error: {str(e)}",
-            "error_type": type(e).__name__
-        }
-
-    # Return result as a valid JSON object to Terraform
-    print(json.dumps(result))
-
-if __name__ == "__main__":
-    main()
+# Return result as JSON to Terraform
+echo "{\"output_path\":\"$OUTPUT_PATH\", \"bucket_name\":\"$BUCKET_NAME\", \"status\":\"success\", \"message\":\"Backend packaging and upload successful\"}"
