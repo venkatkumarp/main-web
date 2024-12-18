@@ -3,6 +3,7 @@
 import subprocess
 import sys
 import json
+import os
 
 def main():
     # Read input from Terraform
@@ -11,25 +12,38 @@ def main():
     bucket_name = input_data.get("bucket_name")
     output_path = input_data.get("output_path")
 
+    # Change working directory to 'backend'
+    os.chdir('backend')
+
     # Execute the commands
-    commands = [
-        "python -m pip install --upgrade poetry",
-        "poetry install || (poetry lock && poetry install)",
-        "chmod +x ./export-deps.sh",
-        "./export-deps.sh",
-        "pip install -r requirements.txt",
-        f"zip -r {output_path} .",
-        f"aws s3 cp {output_path} s3://{bucket_name}/backend.zip"
-    ]
+    try:
+        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
+        subprocess.run(["poetry", "install"], shell=True, check=True)
+        subprocess.run(["chmod", "+x", "./export-deps.sh"], shell=True, check=True)
+        subprocess.run(["./export-deps.sh"], shell=True, check=True)
+        subprocess.run(["pip", "install", "-r", "requirements.txt"], shell=True, check=True)
 
-    for command in commands:
-        subprocess.run(command, shell=True, check=True)
+        # Zip the backend folder
+        subprocess.run(["zip", "-r", output_path, "."], shell=True, check=True)
 
-    # Return output to Terraform
-    result = {
-        "output_path": output_path,
-        "bucket_name": bucket_name
-    }
+        # Upload the zip file to S3 using AWS CLI
+        subprocess.run(["aws", "s3", "cp", output_path, f"s3://{bucket_name}/backend.zip"], shell=True, check=True)
+
+        # Return result to Terraform
+        result = {
+            "output_path": output_path,
+            "bucket_name": bucket_name,
+            "status": "success",
+            "message": "Backend packaging and upload successful"
+        }
+
+    except subprocess.CalledProcessError as e:
+        result = {
+            "status": "failure",
+            "message": f"Error: {str(e)}"
+        }
+
+    # Return result as JSON
     print(json.dumps(result))
 
 if __name__ == "__main__":
