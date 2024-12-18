@@ -12,7 +12,8 @@ def main():
     bucket_name = input_data.get("bucket_name")
     output_path = input_data.get("output_path")
 
-    # Execute the commands
+    result = {}
+
     try:
         # Upgrade Poetry if necessary
         subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
@@ -21,7 +22,7 @@ def main():
         try:
             subprocess.run(["poetry", "install"], shell=True, check=True)
         except subprocess.CalledProcessError:
-            print("Poetry install failed, trying 'poetry lock && poetry install'")
+            # Fallback if poetry install fails
             subprocess.run(["poetry", "lock"], shell=True, check=True)
             subprocess.run(["poetry", "install"], shell=True, check=True)
 
@@ -38,7 +39,7 @@ def main():
         # Upload the zip file to S3 using AWS CLI
         subprocess.run(["aws", "s3", "cp", output_path, f"s3://{bucket_name}/backend.zip"], shell=True, check=True)
 
-        # Return result to Terraform
+        # Populate the result dictionary
         result = {
             "output_path": output_path,
             "bucket_name": bucket_name,
@@ -47,12 +48,13 @@ def main():
         }
 
     except subprocess.CalledProcessError as e:
+        # Handle errors in the subprocess and return failure status
         result = {
             "status": "failure",
             "message": f"Error: {str(e)}"
         }
 
-    # Return result as JSON
+    # Return result as a valid JSON object to Terraform
     print(json.dumps(result))
 
 if __name__ == "__main__":
