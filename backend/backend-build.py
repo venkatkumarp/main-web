@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#
+
 import subprocess
 import sys
 import json
@@ -11,9 +11,6 @@ def main():
     environment = input_data.get("environment")
     bucket_name = input_data.get("bucket_name")
     output_path = input_data.get("output_path")
-
-    # Change working directory to 'backend'
-    os.chdir('backend')
 
     # Execute the commands
     try:
