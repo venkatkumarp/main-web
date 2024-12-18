@@ -105,7 +105,7 @@ data "external" "backend_package" {
 ##                                                            ##
 ###############################################################
 
-output "docker_image_status" {
+/*output "docker_image_status" {
   value       = data.external.backend_package.result.status  # Corrected reference
   description = "Status of the Docker image build and deployment"
 }
@@ -123,4 +123,4 @@ output "image_uri" {
 output "ecr_repo_name" {
   value       = local.ecr_repo_name[var.aws_account_id]  # Access specific ECR repo name
   description = "The name of the ECR repository"
-}
+}*/
