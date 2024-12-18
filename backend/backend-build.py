@@ -16,8 +16,8 @@ def main():
     try:
         subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
         subprocess.run(["poetry", "install"], shell=True, check=True)
-        subprocess.run(["chmod", "+x", "./export-deps.sh"], shell=True, check=True)
-        subprocess.run(["./export-deps.sh"], shell=True, check=True)
+        subprocess.run(["chmod", "+x", "./backend/export-deps.sh"], shell=True, check=True)
+        subprocess.run(["./backend/export-deps.sh"], shell=True, check=True)
         subprocess.run(["pip", "install", "-r", "requirements.txt"], shell=True, check=True)
 
         # Zip the backend folder
