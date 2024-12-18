@@ -15,7 +15,7 @@ def main():
 
     # Ensure Poetry is installed
     try:
-        subprocess.run(["python3", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
+        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error installing poetry: {str(e)}")
         sys.exit(1)
