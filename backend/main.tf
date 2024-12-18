@@ -7,7 +7,6 @@
 variable "aws_account_id" {
   type        = string
   description = "Account ID AWS"
-
 }
 
 ###############################################
@@ -17,8 +16,7 @@ variable "aws_account_id" {
 ###############################################
 
 terraform {
-  backend "s3" {
-  }
+  backend "s3" {}
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -38,10 +36,7 @@ locals {
 provider "aws" {
   region = local.aws_region
   ignore_tags {
-    key_prefixes = [
-      "bayer:",
-      "mon:"
-    ]
+    key_prefixes = ["bayer:", "mon:"]
   }
   assume_role {
     role_arn = local.aws_infra_deploy_role
@@ -51,16 +46,13 @@ provider "aws" {
   }
 }
 
-
 ###############################################
 ##                                           ##
 ##  Local Variables Configuration            ##
 ##                                           ##
 ###############################################
 
-
 locals {
-
   project_name = "time-tracking"
 
   environment        = lookup(local.environments, var.aws_account_id, "none")
@@ -77,8 +69,6 @@ locals {
   }
 
   aws_region = "eu-central-1"
-
-
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
   lambda_function_name = {
@@ -102,9 +92,9 @@ data "external" "backend_package" {
   program = ["bash", "${path.module}/backend-build.sh"]
 
   query = {
-    environment = local.environment
-    lambda_function_name = local.lambda_function_name
-    ecr_repo_name        = local.ecr_repo_name
+    environment        = local.environment
+    lambda_function_name = local.lambda_function_name[var.aws_account_id]  # Corrected value
+    ecr_repo_name        = local.ecr_repo_name[var.aws_account_id]  # Corrected value
   }
 }
 
@@ -115,21 +105,21 @@ data "external" "backend_package" {
 ###############################################################
 
 output "docker_image_status" {
-  value       = data.external.backend_deploy.result.status
+  value       = data.external.backend_package.result.status  # Corrected reference
   description = "Status of the Docker image build and deployment"
 }
 
 output "lambda_function_name" {
-  value       = local.lambda_function_name
+  value       = local.lambda_function_name[var.aws_account_id]  # Access specific lambda name
   description = "Name of the Lambda function used for deployment"
 }
 
 output "image_uri" {
-  value       = data.external.backend_deploy.result.image_uri
+  value       = data.external.backend_package.result.image_uri  # Corrected reference
   description = "URI of the Docker image pushed to ECR"
 }
 
 output "ecr_repo_name" {
-  value       = local.ecr_repo_name
+  value       = local.ecr_repo_name[var.aws_account_id]  # Access specific ECR repo name
   description = "The name of the ECR repository"
 }
