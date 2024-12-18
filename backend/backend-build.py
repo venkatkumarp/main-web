@@ -4,38 +4,35 @@ import subprocess
 import sys
 import json
 import os
-import venv
+import traceback
 
-def create_virtual_environment():
-    """
-    Create a virtual environment if it doesn't exist
-    """
-    venv_path = ".venv"
-    if not os.path.exists(venv_path):
-        venv.create(venv_path, with_pip=True)
-    return venv_path
-
-def run_command(cmd, capture_output=False):
+def run_command(cmd, check=True, capture_output=False):
     """
     Run a command with error handling
     """
     try:
-        if capture_output:
-            return subprocess.run(cmd, check=True, capture_output=True, text=True)
-        else:
-            return subprocess.run(cmd, check=True)
+        result = subprocess.run(
+            cmd, 
+            check=check, 
+            capture_output=capture_output, 
+            text=True
+        )
+        return result
     except subprocess.CalledProcessError as e:
-        print(f"Command failed: {cmd}")
-        print(f"Error output: {e.stderr}")
-        raise
+        raise RuntimeError(f"Command failed: {cmd}\nError: {e.stderr}")
 
 def main():
+    # Prepare a default result dictionary
     result = {
         "status": "failure",
         "message": "Unknown error",
         "output_path": "",
         "bucket_name": ""
     }
+
+    # Redirect all standard output and error to /dev/null
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
 
     try:
         # Read input from Terraform
@@ -44,35 +41,27 @@ def main():
         bucket_name = input_data.get("bucket_name", "")
         output_path = input_data.get("output_path", "backend.zip")
 
-        # Create virtual environment
-        venv_path = create_virtual_environment()
+        # Ensure virtual environment exists
+        if not os.path.exists(".venv"):
+            run_command(["python3", "-m", "venv", ".venv"])
 
-        # Activate virtual environment and set up Poetry
-        poetry_env_cmd = [
-            f"{venv_path}/bin/python", "-m", "pip", "install", 
-            "--upgrade", "poetry"
-        ]
-        run_command(poetry_env_cmd)
+        # Activate virtual environment and install dependencies
+        venv_python = ".venv/bin/python"
+        venv_pip = ".venv/bin/pip"
 
-        # Verify Poetry installation
-        poetry_path = f"{venv_path}/bin/poetry"
-        run_command([poetry_path, "--version"])
+        # Install Poetry
+        run_command([venv_pip, "install", "--upgrade", "poetry"])
 
         # Install project dependencies
-        run_command([poetry_path, "install"])
+        run_command([".venv/bin/poetry", "install"])
 
-        # Verify export-deps.sh exists and is executable
-        if not os.path.exists("./export-deps.sh"):
-            raise FileNotFoundError("export-deps.sh script not found")
-        
-        # Make sure the script is executable
+        # Ensure export script is executable
         run_command(["chmod", "+x", "./export-deps.sh"])
 
-        # Run export-deps.sh with verbose output
-        export_output = run_command(["./export-deps.sh"], capture_output=True)
-        print("Export dependencies output:", export_output.stdout)
+        # Run export script
+        run_command(["./export-deps.sh"])
 
-        # Zip the backend
+        # Create backend zip
         run_command(["zip", "-r", output_path, "."])
 
         # Upload to S3
@@ -91,7 +80,7 @@ def main():
         }
 
     except Exception as e:
-        # Capture detailed error information
+        # Capture error details
         result = {
             "status": "failure",
             "message": str(e),
@@ -99,8 +88,12 @@ def main():
             "bucket_name": ""
         }
 
-    # Ensure only JSON is printed
+    # Reopen stdout to ensure clean JSON output
+    sys.stdout = sys.__stdout__
+    
+    # Print only JSON
     print(json.dumps(result))
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
