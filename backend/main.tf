@@ -89,7 +89,7 @@ locals {
   }, var.aws_account_id, null)
 
   image_tags = lookup({
-    "dev" = "api-latest"
+    "440744244651" = "api-latest"
   }, var.aws_account_id, null)
 }
 
