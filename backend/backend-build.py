@@ -54,6 +54,10 @@ def main():
         result = subprocess.run([venv_python, "-m", "poetry", "--version"], capture_output=True, text=True, shell=True)
         print("Poetry version:", result.stdout)  # Debugging output
 
+        # Run poetry lock to update the lock file in case it's out of sync
+        print("Updating poetry lock file...")
+        run_command([venv_python, "-m", "poetry", "lock", "--no-update"])
+
         # Install project dependencies with poetry
         print("Running poetry install...")
         run_command([venv_python, "-m", "poetry", "install"])
