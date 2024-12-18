@@ -13,10 +13,15 @@ def main():
     bucket_name = input_data.get("bucket_name")
     output_path = input_data.get("output_path")
 
+    # Ensure Poetry is installed
+    try:
+        subprocess.run(["python3", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing poetry: {str(e)}")
+        sys.exit(1)
+
     # Execute the commands
     try:
-        # Install and set up dependencies
-        subprocess.run(["python", "-m", "pip", "install", "--upgrade", "poetry"], shell=True, check=True)
         subprocess.run(["poetry", "install"], shell=True, check=True)
         subprocess.run(["chmod", "+x", "./export-deps.sh"], shell=True, check=True)
         subprocess.run(["./export-deps.sh"], shell=True, check=True)
@@ -24,7 +29,7 @@ def main():
 
         # Get the path to site-packages in the virtual environment
         venv_site_packages = subprocess.check_output(
-            ["python", "-c", "import site; print(site.getsitepackages()[0])"], 
+            ["python3", "-c", "import site; print(site.getsitepackages()[0])"], 
             universal_newlines=True
         ).strip() + "/site-packages"
 
