@@ -2,16 +2,20 @@
 set -euo pipefail
 set -x  # Enable debugging output
 
-echo "Starting backend-build.sh"
+# Function to output a JSON error and exit
+function json_error {
+  echo "{\"status\": \"error\", \"message\": \"$1\"}"
+  exit 1
+}
 
 # Check if necessary commands are installed
-command -v jq >/dev/null 2>&1 || { echo "{\"status\": \"error\", \"message\": \"jq is not installed\"}"; exit 1; }
-command -v docker >/dev/null 2>&1 || { echo "{\"status\": \"error\", \"message\": \"Docker is not installed\"}"; exit 1; }
-command -v aws >/dev/null 2>&1 || { echo "{\"status\": \"error\", \"message\": \"AWS CLI is not installed\"}"; exit 1; }
+command -v jq >/dev/null 2>&1 || json_error "jq is not installed"
+command -v docker >/dev/null 2>&1 || json_error "Docker is not installed"
+command -v aws >/dev/null 2>&1 || json_error "AWS CLI is not installed"
 
 # Read input data from Terraform query directly using jq
 input_data=$(cat)
-echo "Reading input data from Terraform"
+
 lambda_function_name=$(echo "$input_data" | jq -r '.lambda_function_name')
 ecr_repo_name=$(echo "$input_data" | jq -r '.ecr_repo_name')
 environment=$(echo "$input_data" | jq -r '.environment')
@@ -19,41 +23,27 @@ ecr_registry=$(echo "$input_data" | jq -r '.ecr_registry')
 image_tag=$(echo "$input_data" | jq -r '.image_tag')
 aws_region=$(echo "$input_data" | jq -r '.region')
 
-# Print values of the inputs to check if they are correctly parsed
-echo "lambda_function_name: $lambda_function_name"
-echo "ecr_repo_name: $ecr_repo_name"
-echo "environment: $environment"
-echo "ecr_registry: $ecr_registry"
-echo "image_tag: $image_tag"
-echo "aws_region: $aws_region"
-
 # Check for missing values and fail gracefully
-[[ -z "$lambda_function_name" ]] && echo "{\"status\": \"error\", \"message\": \"lambda_function_name is empty\"}" >&2 && exit 1
-[[ -z "$ecr_repo_name" ]] && echo "{\"status\": \"error\", \"message\": \"ecr_repo_name is empty\"}" >&2 && exit 1
-[[ -z "$ecr_registry" ]] && echo "{\"status\": \"error\", \"message\": \"ecr_registry is empty\"}" >&2 && exit 1
-[[ -z "$image_tag" ]] && echo "{\"status\": \"error\", \"message\": \"image_tag is empty\"}" >&2 && exit 1
-[[ -z "$aws_region" ]] && echo "{\"status\": \"error\", \"message\": \"aws_region is empty\"}" >&2 && exit 1
+[[ -z "$lambda_function_name" ]] && json_error "lambda_function_name is empty"
+[[ -z "$ecr_repo_name" ]] && json_error "ecr_repo_name is empty"
+[[ -z "$ecr_registry" ]] && json_error "ecr_registry is empty"
+[[ -z "$image_tag" ]] && json_error "image_tag is empty"
+[[ -z "$aws_region" ]] && json_error "aws_region is empty"
 
-echo "Authenticating Docker with AWS ECR"
+# Authenticate Docker with AWS ECR
 aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$ecr_registry"
 
-# Build the Docker image with the tag provided
-echo "Building Docker image: $ecr_registry/$ecr_repo_name:$image_tag"
+# Build the Docker image
 docker build -t "$ecr_registry/$ecr_repo_name:$image_tag" .
 
-# Push the image to ECR
-echo "Pushing Docker image to ECR"
+# Push the Docker image to ECR
 docker push "$ecr_registry/$ecr_repo_name:$image_tag"
 
 # Deploy the image to AWS Lambda
-echo "Updating Lambda function with new image"
 aws lambda update-function-code \
     --function-name "$lambda_function_name" \
     --image-uri "$ecr_registry/$ecr_repo_name:$image_tag" \
     --region "$aws_region"
 
-# Final success message
-echo "Deployment successful!"
-
-# Return status to Terraform in JSON format
+# Final success message, return in JSON format
 echo "{\"status\": \"success\", \"message\": \"Deployment successful!\", \"image_uri\": \"$ecr_registry/$ecr_repo_name:$image_tag\", \"region\": \"$aws_region\"}"
