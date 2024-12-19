@@ -5,9 +5,9 @@ set -x  # Enable debugging output
 echo "Starting backend-build.sh"
 
 # Check if necessary commands are installed
-command -v jq >/dev/null 2>&1 || { echo "jq is not installed"; exit 1; }
-command -v docker >/dev/null 2>&1 || { echo "Docker is not installed"; exit 1; }
-command -v aws >/dev/null 2>&1 || { echo "AWS CLI is not installed"; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "{\"status\": \"error\", \"message\": \"jq is not installed\"}"; exit 1; }
+command -v docker >/dev/null 2>&1 || { echo "{\"status\": \"error\", \"message\": \"Docker is not installed\"}"; exit 1; }
+command -v aws >/dev/null 2>&1 || { echo "{\"status\": \"error\", \"message\": \"AWS CLI is not installed\"}"; exit 1; }
 
 # Read input data from Terraform query directly using jq
 input_data=$(cat)
@@ -34,7 +34,6 @@ echo "aws_region: $aws_region"
 [[ -z "$image_tag" ]] && echo "{\"status\": \"error\", \"message\": \"image_tag is empty\"}" >&2 && exit 1
 [[ -z "$aws_region" ]] && echo "{\"status\": \"error\", \"message\": \"aws_region is empty\"}" >&2 && exit 1
 
-
 echo "Authenticating Docker with AWS ECR"
 aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$ecr_registry"
 
@@ -56,5 +55,5 @@ aws lambda update-function-code \
 # Final success message
 echo "Deployment successful!"
 
-# Return status to Terraform
+# Return status to Terraform in JSON format
 echo "{\"status\": \"success\", \"message\": \"Deployment successful!\", \"image_uri\": \"$ecr_registry/$ecr_repo_name:$image_tag\", \"region\": \"$aws_region\"}"
