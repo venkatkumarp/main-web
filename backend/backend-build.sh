@@ -1,12 +1,12 @@
 #!/bin/bash
-# backend-build.sh
+
 
 # Redirect all output to stderr by default
 exec 1>&2
 
 # Enable strict mode
 set -euo pipefail
-
+set -x
 # Function to output a JSON error to stdout
 function json_error {
     >&1 echo "{\"error\": \"$1\", \"status\": \"error\"}"
