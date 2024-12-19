@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-set -x  # Enable debugging output
+set -x  # Enable debugging output (disable this if it causes non-JSON output)
 
 # Function to output a JSON error and exit
 function json_error {
@@ -31,19 +31,19 @@ aws_region=$(echo "$input_data" | jq -r '.region')
 [[ -z "$aws_region" ]] && json_error "aws_region is empty"
 
 # Authenticate Docker with AWS ECR
-aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$ecr_registry"
+aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$ecr_registry" || json_error "Failed to authenticate Docker with AWS ECR"
 
 # Build the Docker image
-docker build -t "$ecr_registry/$ecr_repo_name:$image_tag" .
+docker build -t "$ecr_registry/$ecr_repo_name:$image_tag" . || json_error "Docker build failed"
 
 # Push the Docker image to ECR
-docker push "$ecr_registry/$ecr_repo_name:$image_tag"
+docker push "$ecr_registry/$ecr_repo_name:$image_tag" || json_error "Docker push failed"
 
 # Deploy the image to AWS Lambda
 aws lambda update-function-code \
     --function-name "$lambda_function_name" \
     --image-uri "$ecr_registry/$ecr_repo_name:$image_tag" \
-    --region "$aws_region"
+    --region "$aws_region" || json_error "Lambda function update failed"
 
 # Final success message, return in JSON format
 echo "{\"status\": \"success\", \"message\": \"Deployment successful!\", \"image_uri\": \"$ecr_registry/$ecr_repo_name:$image_tag\", \"region\": \"$aws_region\"}"
