@@ -109,6 +109,7 @@ data "external" "backend_deploy" {
     ecr_registry         = "${var.aws_account_id}.dkr.ecr.${local.aws_region}.amazonaws.com"
     image_tag            = local.image_tags
     region               = local.aws_region
+    mode = terraform.workspace == "default" ? "read" : "apply"
   }
 }
 
