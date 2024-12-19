@@ -120,15 +120,15 @@ data "external" "backend_deploy" {
 
 output "backend_deploy_status" {
   description = "Status of the backend deployment"
-  value       = data.external.backend_deploy.result.status
+  value = data.external.backend_deploy.result.status
 }
 
-# output "backend_deployed_lambda_function" {
-#   description = "Name of the Lambda function deployed"
-#   value       = data.external.backend_deploy.result.lambda_function
-# }
+output "backend_deploy_message" {
+  description = "Deployment message"
+  value = data.external.backend_deploy.result.message
+}
 
-output "backend_deployed_image_tag" {
-  description = "Image tag of the deployed backend"
-  value       = data.external.backend_deploy.result.image_tag
+output "backend_deploy_image_uri" {
+  description = "URI of the deployed container image"
+  value = data.external.backend_deploy.result.image_uri
 }
