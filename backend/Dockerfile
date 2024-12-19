@@ -1,21 +1,21 @@
 FROM public.ecr.aws/lambda/python:3.12
 
-# Set working directory
-WORKDIR ${LAMBDA_TASK_ROOT}
+# Install Poetry
+RUN pip install poetry
 
-# Copy the backend directory
-COPY ./backend ./backend
+# Copy the entire project into the container
+COPY . ${LAMBDA_TASK_ROOT}
 
-# Set working directory to backend
+# Set working directory to backend folder
 WORKDIR ${LAMBDA_TASK_ROOT}/backend
 
-# Run export-deps.sh to generate requirements.txt
-RUN bash export-deps.sh
+# Install wheel package
+RUN pip3 install wheel --target "${LAMBDA_TASK_ROOT}"
 
-# Install dependencies
+# Run poetry export to generate requirements.txt
+RUN poetry export --without-hashes -o requirements.txt
+
+# Install dependencies from the generated requirements.txt
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
-
-# Copy any remaining files
-COPY . ${LAMBDA_TASK_ROOT}
 
 CMD ["start.handler"]
