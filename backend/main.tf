@@ -117,7 +117,9 @@ data "external" "backend_deploy" {
 ##  Outputs from the Frontend Build Process                   ##
 ##                                                            ##
 ################################################################
-
+output "backend_deploy_status" {
+  value = data.external.backend_deploy.result
+}
 /*output "backend_deploy_status" {
   description = "Status of the backend deployment"
   value = data.external.backend_deploy.result.status
