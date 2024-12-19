@@ -1,13 +1,15 @@
 FROM public.ecr.aws/lambda/python:3.12
 COPY . ${LAMBDA_TASK_ROOT}
-WORKDIR /backend
+WORKDIR ${LAMBDA_TASK_ROOT}/backend
 ARG DEBIAN_FRONTEND=noninteractive
+
+# Verify that the script exists
+RUN ls -al ${LAMBDA_TASK_ROOT}/backend
 
 # Ensure dependencies required to run export-deps.sh are installed
 RUN pip3 install wheel poetry --target "${LAMBDA_TASK_ROOT}"
 
-# Switch to the directory where export-deps.sh resides and run it
-WORKDIR ${LAMBDA_TASK_ROOT}/backend
+# Make export-deps.sh executable and run it
 RUN chmod +x export-deps.sh && ./export-deps.sh
 
 # Install dependencies from requirements.txt
