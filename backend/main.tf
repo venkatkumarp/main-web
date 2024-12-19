@@ -118,7 +118,7 @@ data "external" "backend_deploy" {
 ##                                                            ##
 ################################################################
 
-output "backend_deploy_status" {
+/*output "backend_deploy_status" {
   description = "Status of the backend deployment"
   value = data.external.backend_deploy.result.status
 }
@@ -131,4 +131,4 @@ output "backend_deploy_message" {
 output "backend_deploy_image_uri" {
   description = "URI of the deployed container image"
   value = data.external.backend_deploy.result.image_uri
-}
+}*/
