@@ -57,4 +57,4 @@ aws lambda update-function-code \
 echo "Deployment successful!"
 
 # Return status to Terraform
-echo "{\"status\": \"success\", \"lambda_function\": \"$lambda_function_name\", \"image_tag\": \"$image_tag\", \"region\": \"$aws_region\"}"
+echo "{\"status\": \"success\", \"image_uri\": \"$ecr_registry/$ecr_repo_name:$image_tag\", \"region\": \"$aws_region\"}"
