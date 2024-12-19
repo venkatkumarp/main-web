@@ -80,7 +80,7 @@ locals {
 
   # Mapping of account IDs to Lambda function names
   lambda_function_names = lookup({
-    "440744244651" = "docker-lambda"
+    "440744244651" = "image"
   }, var.aws_account_id, null)
 
   # Mapping of account IDs to ECR repositories
