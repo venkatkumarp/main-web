@@ -1,72 +1,115 @@
 #!/bin/bash
+set -euo pipefail
 
-# Disable debug mode and exit on error
-set -e
+# Function for logging to stderr
+log() {
+    echo "$1" >&2
+}
 
-# Read JSON input from stdin (this is what Terraform passes)
-eval "$(jq -r '@sh "
-LAMBDA_FUNCTION_NAME=\(.lambda_function_name)
-ECR_REPO_NAME=\(.ecr_repo_name)
-ENVIRONMENT=\(.environment)
-ECR_REGISTRY=\(.ecr_registry)
-IMAGE_TAG=\(.image_tag)
-REGION=\(.region)
-"')"
+# Check required tools
+command -v jq >/dev/null 2>&1 || { log "jq is not installed"; exit 1; }
+command -v docker >/dev/null 2>&1 || { log "Docker is not installed"; exit 1; }
+command -v aws >/dev/null 2>&1 || { log "AWS CLI is not installed"; exit 1; }
 
-# Log variables (to stderr)
->&2 echo "Environment: $ENVIRONMENT"
->&2 echo "Lambda Function: $LAMBDA_FUNCTION_NAME"
->&2 echo "ECR Repo: $ECR_REPO_NAME"
->&2 echo "ECR Registry: $ECR_REGISTRY"
->&2 echo "Image Tag: $IMAGE_TAG"
->&2 echo "Region: $REGION"
+# Read input
+input_data=$(cat)
+lambda_function_name=$(echo "$input_data" | jq -r '.lambda_function_name // empty')
+ecr_repo_name=$(echo "$input_data" | jq -r '.ecr_repo_name // empty')
+environment=$(echo "$input_data" | jq -r '.environment // empty')
+ecr_registry=$(echo "$input_data" | jq -r '.ecr_registry // empty')
+image_tag=$(echo "$input_data" | jq -r '.image_tag // empty')
+aws_region=$(echo "$input_data" | jq -r '.region // empty')
 
-# Check if all required variables are present
-if [ -z "$LAMBDA_FUNCTION_NAME" ] || [ -z "$ECR_REPO_NAME" ] || [ -z "$ECR_REGISTRY" ] || [ -z "$IMAGE_TAG" ] || [ -z "$REGION" ]; then
-    # Output error as JSON to stdout
-    jq -n \
-        --arg error "Missing required variables" \
-        '{"error": $error}'
+# Generate version components
+timestamp=$(date +%Y%m%d-%H%M%S)
+git_hash=""
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git_hash="-$(git rev-parse --short HEAD)"
+fi
+
+# Create version tag
+version_tag="${image_tag}-${timestamp}${git_hash}"
+
+# Also create latest tag for the environment
+latest_tag="${image_tag}-latest"
+
+# Validate required parameters
+if [[ -z "$lambda_function_name" || -z "$ecr_repo_name" || -z "$ecr_registry" || -z "$image_tag" || -z "$aws_region" ]]; then
+    log "Error: Missing required parameters"
+    log "Required: lambda_function_name, ecr_repo_name, ecr_registry, image_tag, aws_region"
     exit 1
 fi
 
-# Execute AWS commands (output to stderr)
-{
-    # Login to ECR
-    >&2 echo "Logging into ECR..."
-    aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+log "Starting build process for $lambda_function_name..."
+log "Using ECR repository: $ecr_repo_name"
+log "Version tag: $version_tag"
 
-    # Build Docker image
-    >&2 echo "Building Docker image..."
-    docker build -t "$ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG" .
-
-    # Push to ECR
-    >&2 echo "Pushing to ECR..."
-    docker push "$ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG"
-
-    # Update Lambda
-    >&2 echo "Updating Lambda function..."
-    aws lambda update-function-code \
-        --function-name "$LAMBDA_FUNCTION_NAME" \
-        --image-uri "$ECR_REGISTRY/$ECR_REPO_NAME:$IMAGE_TAG" \
-        --region "$REGION"
-} || {
-    # If any command fails, output error as JSON
-    jq -n \
-        --arg error "Failed to execute AWS commands" \
-        '{"error": $error}'
+# Login to ECR
+if ! aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$ecr_registry" >&2; then
+    log "Error: Failed to login to ECR"
     exit 1
-}
+fi
 
-# Output success as JSON to stdout
+# Build image
+if ! timeout 300 docker build -t "$ecr_registry/$ecr_repo_name:$version_tag" \
+                            -t "$ecr_registry/$ecr_repo_name:$latest_tag" . >&2; then
+    log "Error: Docker build failed"
+    exit 1
+fi
+
+# Push both tags
+if ! docker push "$ecr_registry/$ecr_repo_name:$version_tag" >&2; then
+    log "Error: Docker push failed for version tag"
+    exit 1
+fi
+
+if ! docker push "$ecr_registry/$ecr_repo_name:$latest_tag" >&2; then
+    log "Error: Docker push failed for latest tag"
+    exit 1
+fi
+
+# Clean up old images (keep last 5 versions)
+if ! aws ecr list-images \
+    --repository-name "$ecr_repo_name" \
+    --region "$aws_region" \
+    --filter "tagStatus=TAGGED" \
+    --query 'imageIds[?contains(imageTag, `'"${image_tag}-"'`)]' \
+    --output json | \
+    jq -r '[.[] | select(.imageTag != "'"${latest_tag}"'") | .imageTag] | sort | .[:-5] | .[]' | \
+    while read -r old_tag; do
+        log "Removing old image tag: $old_tag"
+        aws ecr batch-delete-image \
+            --repository-name "$ecr_repo_name" \
+            --region "$aws_region" \
+            --image-ids imageTag="$old_tag" >&2
+    done; then
+    log "Warning: Failed to clean up old images"
+fi
+
+# Update Lambda function with the new version
+if ! aws lambda update-function-code \
+    --function-name "$lambda_function_name" \
+    --image-uri "$ecr_registry/$ecr_repo_name:$version_tag" \
+    --region "$aws_region" >&2; then
+    log "Error: Failed to update Lambda function"
+    exit 1
+fi
+
+# Output JSON result
 jq -n \
-    --arg status "success" \
-    --arg function "$LAMBDA_FUNCTION_NAME" \
-    --arg tag "$IMAGE_TAG" \
-    --arg region "$REGION" \
-    '{
-        status: $status,
-        lambda_function: $function,
-        image_tag: $tag,
-        region: $region
-    }'
+  --arg lambda_function "$lambda_function_name" \
+  --arg ecr_repo "$ecr_repo_name" \
+  --arg environment "$environment" \
+  --arg ecr_registry "$ecr_registry" \
+  --arg image_tag "$version_tag" \
+  --arg latest_tag "$latest_tag" \
+  --arg aws_region "$aws_region" \
+  '{
+    lambda_function: $lambda_function,
+    ecr_repo: $ecr_repo,
+    environment: $environment,
+    ecr_registry: $ecr_registry,
+    image_tag: $image_tag,
+    latest_tag: $latest_tag,
+    aws_region: $aws_region
+  }'
