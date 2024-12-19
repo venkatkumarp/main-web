@@ -117,20 +117,32 @@ data "external" "backend_deploy" {
 ##  Outputs from the Frontend Build Process                   ##
 ##                                                            ##
 ################################################################
-output "backend_deploy_status" {
-  value = data.external.backend_deploy.result
-}
-/*output "backend_deploy_status" {
-  description = "Status of the backend deployment"
-  value = data.external.backend_deploy.result.status
+# Output the Lambda function name
+output "lambda_function_name" {
+  value = data.external.backend_deploy.result.lambda_function
 }
 
-output "backend_deploy_message" {
-  description = "Deployment message"
-  value = data.external.backend_deploy.result.message
+# Output the ECR repository name
+output "ecr_repo_name" {
+  value = data.external.backend_deploy.result.ecr_repo
 }
 
-output "backend_deploy_image_uri" {
-  description = "URI of the deployed container image"
-  value = data.external.backend_deploy.result.image_uri
-}*/
+# Output the environment
+output "deployment_environment" {
+  value = data.external.backend_deploy.result.environment
+}
+
+# Output the ECR registry
+output "ecr_registry" {
+  value = data.external.backend_deploy.result.ecr_registry
+}
+
+# Output the image tag
+output "image_tag" {
+  value = data.external.backend_deploy.result.image_tag
+}
+
+# Output the AWS region
+output "aws_region" {
+  value = data.external.backend_deploy.result.aws_region
+}
