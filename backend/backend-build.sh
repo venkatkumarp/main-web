@@ -34,6 +34,10 @@ echo "aws_region: $aws_region"
 [[ -z "$image_tag" ]] && echo "{\"status\": \"error\", \"message\": \"image_tag is empty\"}" >&2 && exit 1
 [[ -z "$aws_region" ]] && echo "{\"status\": \"error\", \"message\": \"aws_region is empty\"}" >&2 && exit 1
 
+
+echo "Authenticating Docker with AWS ECR"
+aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$ecr_registry"
+
 # Build the Docker image with the tag provided
 echo "Building Docker image: $ecr_registry/$ecr_repo_name:$image_tag"
 docker build -t "$ecr_registry/$ecr_repo_name:$image_tag" .
