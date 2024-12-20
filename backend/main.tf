@@ -103,13 +103,14 @@ data "external" "backend_deploy" {
   program = ["bash", "${path.module}/backend-build.sh"]
 
   query = {
+    is_apply            = terraform.workspace == "default" ? "true" : "false"
     environment          = local.environment
     lambda_function_name = local.lambda_function_names
     ecr_repo_name        = local.ecr_repo_names
     ecr_registry         = "${var.aws_account_id}.dkr.ecr.${local.aws_region}.amazonaws.com"
     image_tag            = local.image_tags
     region               = local.aws_region
-    mode = terraform.workspace == "default" ? "read" : "apply"
+    #mode = terraform.workspace == "default" ? "read" : "apply"
   }
 }
 
