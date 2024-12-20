@@ -32,7 +32,7 @@ locals {
     managed_by  = "terraform"
     Repository  = "https://github.com/bayer-int/ph-rd-time-tracking-web"
   }
- is_apply = terraform.workspace == "apply"
+
 }
 
 provider "aws" {
@@ -104,15 +104,13 @@ data "external" "backend_deploy" {
   program = ["bash", "${path.module}/backend-build.sh"]
 
   query = {
-    is_apply            = local.is_apply
     environment          = local.environment
     lambda_function_name = local.lambda_function_names
     ecr_repo_name        = local.ecr_repo_names
     ecr_registry         = "${var.aws_account_id}.dkr.ecr.${local.aws_region}.amazonaws.com"
     image_tag            = local.image_tags
     region               = local.aws_region
-    count = local.is_apply ? 1 : 0
-    #mode = terraform.workspace == "default" ? "read" : "apply"
+    is_apply             = "${terraform.workspace == "default" ? "true" : "false"}" 
   }
 }
 
