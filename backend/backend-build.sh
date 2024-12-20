@@ -44,15 +44,14 @@ if [[ "$mode" == "apply" ]]; then
     log "Running in apply mode - starting deployment process..."
     command -v docker >/dev/null 2>&1 || { log "Docker is not installed"; exit 1; }
 
-    # Generate version components
-    timestamp=$(date +%Y%m%d-%H%M%S)
+    # Generate git hash if available
     git_hash=""
     if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         git_hash="-$(git rev-parse --short HEAD)"
     fi
 
-    # Update version tag with timestamp and git hash
-    version_tag="${image_tag}-${timestamp}${git_hash}"
+    # Update version tag with git hash (no timestamp)
+    version_tag="${image_tag}${git_hash}"
     latest_tag="${image_tag}-latest"
 
     log "Starting build process for $lambda_function_name..."
@@ -65,30 +64,31 @@ if [[ "$mode" == "apply" ]]; then
         exit 1
     fi
 
-    # Build image
+    # Build image with error handling
     if ! timeout 300 docker build -t "$ecr_registry/$ecr_repo_name:$version_tag" \
                                 -t "$ecr_registry/$ecr_repo_name:$latest_tag" . >&2; then
-        log "Error: Docker build failed"
+        log "Error: Docker build failed. Please check your Dockerfile and build context."
         exit 1
     fi
 
-    # Push both tags
+    # Push version tag with error handling
     if ! docker push "$ecr_registry/$ecr_repo_name:$version_tag" >&2; then
-        log "Error: Docker push failed for version tag"
+        log "Error: Failed to push version tag. Please check ECR permissions and network connectivity."
         exit 1
     fi
 
+    # Push latest tag with error handling
     if ! docker push "$ecr_registry/$ecr_repo_name:$latest_tag" >&2; then
-        log "Error: Docker push failed for latest tag"
+        log "Error: Failed to push latest tag. Please check ECR permissions and network connectivity."
         exit 1
     fi
 
-    # Clean up old images (keep last 5 versions)
+    # Clean up old images (keep last 5 versions) with better error handling
     if ! aws ecr list-images \
         --repository-name "$ecr_repo_name" \
         --region "$aws_region" \
         --filter "tagStatus=TAGGED" \
-        --query 'imageIds[?contains(imageTag, `'"${image_tag}-"'`)]' \
+        --query 'imageIds[?contains(imageTag, `'"${image_tag}"'`)]' \
         --output json | \
         jq -r '[.[] | select(.imageTag != "'"${latest_tag}"'") | .imageTag] | sort | .[:-5] | .[]' | \
         while read -r old_tag; do
@@ -96,17 +96,18 @@ if [[ "$mode" == "apply" ]]; then
             aws ecr batch-delete-image \
                 --repository-name "$ecr_repo_name" \
                 --region "$aws_region" \
-                --image-ids imageTag="$old_tag" >&2
+                --image-ids imageTag="$old_tag" >&2 || \
+                log "Warning: Failed to delete image tag: $old_tag"
         done; then
-        log "Warning: Failed to clean up old images"
+        log "Warning: Image cleanup process encountered issues"
     fi
 
-    # Update Lambda function with the new version
+    # Update Lambda function with improved error handling
     if ! aws lambda update-function-code \
         --function-name "$lambda_function_name" \
         --image-uri "$ecr_registry/$ecr_repo_name:$version_tag" \
         --region "$aws_region" >&2; then
-        log "Error: Failed to update Lambda function"
+        log "Error: Failed to update Lambda function. Please check Lambda permissions and configuration."
         exit 1
     fi
 else
