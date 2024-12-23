@@ -11,6 +11,7 @@ env=$(echo "$input_data" | jq -r '.ENVIRONMENT // empty')
 bucket_name=$(echo "$input_data" | jq -r '.S3_BUCKET_NAME // empty')
 
 # Function for error handling that outputs valid JSON
+
 error_exit() {
     # Ensure the error message is properly escaped for JSON
     escaped_error=$(echo "$1" | jq -R .)
@@ -47,15 +48,22 @@ if [ ! -d "$dist_folder" ]; then
     error_exit "Build directory dist not found. Build failed."
 fi
 
-# Upload the contents of the dist folder to S3 recursively
-if aws s3 cp "$dist_folder/" "s3://$bucket_name/" --recursive >&2; then
-    echo "Successfully uploaded files from dist folder to S3" >&2
+# Create a temporary directory and copy dist folder into it
+temp_dir=$(mktemp -d)
+cp -r "$dist_folder" "$temp_dir/"
+
+# Upload the entire dist directory to S3 recursively
+if aws s3 cp "$temp_dir" "s3://$bucket_name" --recursive >&2; then
+    echo "Successfully uploaded dist folder to S3" >&2
 else
-    error_exit "Failed to upload files from dist folder to S3"
+    error_exit "Failed to upload dist folder to S3"
 fi
 
-# Get list of uploaded files inside the dist folder
-uploaded_files=($(find "$dist_folder" -type f -printf "%P\n"))
+# Clean up temporary directory
+rm -rf "$temp_dir"
+
+# Get list of uploaded files including the dist folder
+uploaded_files=($(find "$dist_folder" -printf "%P\n"))
 uploaded_files_string=$(printf '%s,' "${uploaded_files[@]}" | sed 's/,$//')
 
 # Output final JSON result
