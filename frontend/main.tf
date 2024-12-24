@@ -86,6 +86,13 @@ locals {
     "423623838336" = "tfprodbc"
   }
   bucket_name = lookup(local.bucket_names, var.aws_account_id, "invalid-bucket")
+locals {
+  plan_mode = (
+    terraform.workspace == "default"
+    ? "true"
+    : "false"
+  )
+}
 }
 
 
@@ -101,6 +108,9 @@ data "external" "frontend_build" {
   query = {
     ENVIRONMENT    = local.environment
     S3_BUCKET_NAME = local.bucket_name
+  }
+  environment = {
+    PLAN_MODE = local.plan_mode
   }
 }
 
