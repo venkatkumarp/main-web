@@ -20,7 +20,7 @@ error_exit() {
 }
 
 # Only proceed if it's terraform apply, skip during plan
-if [ "$execute_on_apply" != "true" ]; then
+if [ "$execute_on_apply" != "false" ]; then
   echo "Skipping execution during terraform plan."
   exit 0
 fi
