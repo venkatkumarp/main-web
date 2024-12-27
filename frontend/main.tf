@@ -98,7 +98,7 @@ locals {
 data "external" "frontend_build" {
   program = ["bash", "${path.module}/frontend-build.sh"]
   query = {
-    execute_on_apply = "true"
+    execute_on_apply = "false"
     ENVIRONMENT    = local.environment
     S3_BUCKET_NAME = local.bucket_name
   }
