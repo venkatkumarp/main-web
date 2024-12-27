@@ -101,6 +101,7 @@ data "external" "frontend_build" {
   query = {
     ENVIRONMENT    = local.environment
     S3_BUCKET_NAME = local.bucket_name
+    TF_COMMAND = terraform.workspace == "default" ? coalesce(terraform.workspace, "plan") : ""
   }
 }
 
