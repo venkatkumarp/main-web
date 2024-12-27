@@ -8,7 +8,10 @@ variable "aws_account_id" {
   type        = string
   description = "Account ID AWS"
 }
-
+variable "skip_build" {
+  type    = bool
+  default = false  # Default to running the build unless overridden
+}
 ##############################################
 #                                           ##
 #  Provider Configuration for AWS           ##
@@ -86,6 +89,7 @@ locals {
     "423623838336" = "tfprodbc"
   }
   bucket_name = lookup(local.bucket_names, var.aws_account_id, "invalid-bucket")
+  execute_build = var.skip_build == false 
 }
 
 
@@ -96,6 +100,7 @@ locals {
 #                                                            ##
 ###############################################################
 data "external" "frontend_build" {
+  count   = local.execute_build ? 1 : 0  # Only runs if execute_build is true
   program = ["bash", "${path.module}/frontend-build.sh"]
   query = {
     execute_on_apply = "false"
