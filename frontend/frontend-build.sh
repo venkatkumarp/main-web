@@ -10,67 +10,69 @@ input_data=$(cat)
 env=$(echo "$input_data" | jq -r '.ENVIRONMENT // empty')
 bucket_name=$(echo "$input_data" | jq -r '.S3_BUCKET_NAME // empty')
 
-# Check if in plan mode
-plan_mode="${PLAN_MODE:-false}"
-
 # Function for error handling that outputs valid JSON
 error_exit() {
+    # Ensure the error message is properly escaped for JSON
     escaped_error=$(echo "$1" | jq -R .)
     echo "{\"status\": \"error\", \"message\": ${escaped_error}}" >&2
     exit 1
 }
 
-# Check for required input variables
-if [ -z "$env" ]; then
-    error_exit "ENVIRONMENT variable is not set in the input data."
+# Check for ENVIRONMENT variable
+if [ -z "${ENVIRONMENT:-}" ]; then
+    if [ -z "$env" ]; then
+        error_exit "ENVIRONMENT variable is not set in the input data."
+    else
+        echo "Using ENVIRONMENT from input data: $env" >&2
+    fi
+else
+    env="$ENVIRONMENT"
+    echo "Using ENVIRONMENT from environment variable: $env" >&2
 fi
+
+# Check for S3 bucket name
 if [ -z "$bucket_name" ]; then
     error_exit "S3_BUCKET_NAME variable is not set in the input data."
 fi
 
-if [ "$plan_mode" = "true" ]; then
-    # Simulate the build process for the plan step
-    echo "{\"status\": \"plan\", \"message\": \"Simulated build process for Terraform plan\"}"
-else
-    # Perform the actual build and upload process
+# Ensure frontend build
+npm install >&2 || error_exit "npm install failed"
+npm run "build:$env" >&2 || error_exit "npm build failed"
 
-    # Ensure frontend build
-    npm install >&2 || error_exit "npm install failed"
-    npm run "build:$env" >&2 || error_exit "npm build failed"
+# Define the specific build output path
+build_path="dist/time-tracking-app"
 
-    # Define dist folder path relative to the current directory
-    dist_folder="dist"
-
-    # Check if dist folder was created after build
-    if [ ! -d "$dist_folder" ]; then
-        error_exit "Build directory dist not found. Build failed."
-    fi
-
-    # Create a temporary directory and copy dist folder into it
-    temp_dir=$(mktemp -d)
-    cp -r "$dist_folder" "$temp_dir/"
-
-    # Upload the entire dist directory to S3 recursively
-    if aws s3 cp "$temp_dir" "s3://$bucket_name" --recursive >&2; then
-        echo "Successfully uploaded dist folder to S3" >&2
-    else
-        error_exit "Failed to upload dist folder to S3"
-    fi
-
-    # Clean up temporary directory
-    rm -rf "$temp_dir"
-
-    # Get list of uploaded files including the dist folder
-    uploaded_files=($(find "$dist_folder" -printf "%P\n"))
-    uploaded_files_string=$(printf '%s,' "${uploaded_files[@]}" | sed 's/,$//')
-
-    # Output final JSON result
-    echo "{
-        \"status\": \"success\",
-        \"message\": \"Frontend build completed and files uploaded to S3\",
-        \"environment\": \"$env\",
-        \"bucket\": \"$bucket_name\",
-        \"uploaded_count\": \"${#uploaded_files[@]}\",
-        \"uploaded_files\": \"$uploaded_files_string\"
-    }"
+# Check if the specific build path exists
+if [ ! -d "$build_path" ]; then
+    error_exit "Build directory $build_path not found. Build failed."
 fi
+
+# Create a temporary directory for the files
+temp_dir=$(mktemp -d)
+
+# Copy contents of time-tracking-app directory to temp directory
+cp -r "$build_path"/* "$temp_dir/" || error_exit "Failed to copy build files to temporary directory"
+
+# Upload the contents to S3 recursively
+if aws s3 cp "$temp_dir" "s3://$bucket_name" --recursive >&2; then
+    echo "Successfully uploaded $build_path contents to S3" >&2
+else
+    error_exit "Failed to upload $build_path contents to S3"
+fi
+
+# Clean up temporary directory
+rm -rf "$temp_dir"
+
+# Get list of uploaded files
+uploaded_files=($(find "$build_path" -type f -printf "%P\n"))
+uploaded_files_string=$(printf '%s,' "${uploaded_files[@]}" | sed 's/,$//')
+
+# Output final JSON result
+echo "{
+    \"status\": \"success\",
+    \"message\": \"Frontend build completed and files uploaded to S3\",
+    \"environment\": \"$env\",
+    \"bucket\": \"$bucket_name\",
+    \"uploaded_count\": \"${#uploaded_files[@]}\",
+    \"uploaded_files\": \"$uploaded_files_string\"
+}"
