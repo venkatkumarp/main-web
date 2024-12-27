@@ -86,6 +86,8 @@ locals {
     "423623838336" = "tfprodbc"
   }
   bucket_name = lookup(local.bucket_names, var.aws_account_id, "invalid-bucket")
+
+external_command = terraform.workspace == "default" ? ["echo", "{\"status\": \"skipped\", \"message\": \"Skipped during plan\", \"environment\": \"dummy\", \"bucket\": \"dummy\", \"uploaded_count\": \"0\", \"uploaded_files\": \"\"}"] : ["bash", "${path.module}/frontend-build.sh"]
 }
 
 
@@ -95,26 +97,12 @@ locals {
 #  External Data Source for Frontend Build Process           ##
 #                                                            ##
 ###############################################################
-# Create a null resource with triggers
-resource "null_resource" "prevent_plan" {
-  triggers = {
-    # This will always trigger on apply, but not during plan
-    always_run = timestamp()
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
 data "external" "frontend_build" {
-  program = ["bash", "${path.module}/frontend-build.sh"]
+  program = local.external_command
+  # program = ["bash", "${path.module}/frontend-build.sh"]
   query = {
     ENVIRONMENT    = local.environment
     S3_BUCKET_NAME = local.bucket_name
-  }
-  # This will make the data source compute only during apply
-  lifecycle {
-    replace_triggered_by = [null_resource.prevent_plan]
   }
 }
 
