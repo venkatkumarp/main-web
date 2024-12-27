@@ -86,8 +86,8 @@ locals {
     "423623838336" = "tfprodbc"
   }
   bucket_name = lookup(local.bucket_names, var.aws_account_id, "invalid-bucket")
-
-external_command = terraform.workspace == "default" ? ["echo", "{\"status\": \"skipped\", \"message\": \"Skipped during plan\", \"environment\": \"dummy\", \"bucket\": \"dummy\", \"uploaded_count\": \"0\", \"uploaded_files\": \"\"}"] : ["bash", "${path.module}/frontend-build.sh"]
+  is_plan = terraform.workspace == "default" && contains(keys(terraform.workspace_env), "TF_COMMAND") && terraform.workspace_env["TF_COMMAND"] == "plan"
+  external_command = terraform.workspace == "default" ? ["echo", "{\"status\": \"skipped\", \"message\": \"Skipped during plan\", \"environment\": \"dummy\", \"bucket\": \"dummy\", \"uploaded_count\": \"0\", \"uploaded_files\": \"\"}"] : ["bash", "${path.module}/frontend-build.sh"]
 }
 
 
