@@ -1,14 +1,29 @@
 #!/bin/bash
 set -euo pipefail
 
-# Check for required commands
-command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
-command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
-
 # Load JSON input using jq
 input_data=$(cat)
 env=$(echo "$input_data" | jq -r '.ENVIRONMENT // empty')
 bucket_name=$(echo "$input_data" | jq -r '.S3_BUCKET_NAME // empty')
+running_mode=$(echo "$input_data" | jq -r '.RUNNING_MODE // empty')
+
+# Check if this is a plan operation
+if [ "$running_mode" = "plan" ]; then
+    # Return dummy data during plan
+    echo "{
+        \"status\": \"skipped\",
+        \"message\": \"Skipped during plan\",
+        \"environment\": \"$env\",
+        \"bucket\": \"$bucket_name\",
+        \"uploaded_count\": \"0\",
+        \"uploaded_files\": \"\"
+    }"
+    exit 0
+fi
+
+# Check for required commands
+command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
+command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
 
 # Function for error handling that outputs valid JSON
 error_exit() {
@@ -19,15 +34,8 @@ error_exit() {
 }
 
 # Check for ENVIRONMENT variable
-if [ -z "${ENVIRONMENT:-}" ]; then
-    if [ -z "$env" ]; then
-        error_exit "ENVIRONMENT variable is not set in the input data."
-    else
-        echo "Using ENVIRONMENT from input data: $env" >&2
-    fi
-else
-    env="$ENVIRONMENT"
-    echo "Using ENVIRONMENT from environment variable: $env" >&2
+if [ -z "${env:-}" ]; then
+    error_exit "ENVIRONMENT variable is not set in the input data."
 fi
 
 # Check for S3 bucket name
