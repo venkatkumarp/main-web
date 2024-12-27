@@ -115,11 +115,19 @@ data "external" "frontend_build" {
 #                                                            ##
 ###############################################################
 
-output "build_status" {
+/*output "build_status" {
   value = data.external.frontend_build.result.status
 }
 
 output "uploaded_files" {
   value = split(",", data.external.frontend_build.result.uploaded_files)
+}*/
+
+output "build_status" {
+  value = local.execute_build ? data.external.frontend_build[0].result.status : "Not executed"
+}
+
+output "uploaded_files" {
+  value = local.execute_build ? split(",", data.external.frontend_build[0].result.uploaded_files) : []
 }
 
