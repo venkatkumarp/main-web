@@ -1,20 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Check if this is a Terraform plan
-if [[ "${TF_COMMAND:-}" == "plan" ]]; then
-    # Return a dummy response during plan
-    echo "{
-        \"status\": \"skipped\",
-        \"message\": \"Skipped during terraform plan\",
-        \"environment\": \"dummy\",
-        \"bucket\": \"dummy-bucket\",
-        \"uploaded_count\": \"0\",
-        \"uploaded_files\": \"\"
-    }"
-    exit 0
-fi
-
 # Check for required commands
 command -v jq >/dev/null 2>&1 || { echo '{"error": "jq is not installed"}' >&2; exit 1; }
 command -v aws >/dev/null 2>&1 || { echo '{"error": "AWS CLI is not installed"}' >&2; exit 1; }
