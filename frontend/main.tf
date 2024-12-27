@@ -95,13 +95,26 @@ locals {
 #  External Data Source for Frontend Build Process           ##
 #                                                            ##
 ###############################################################
+# Create a null resource with triggers
+resource "null_resource" "prevent_plan" {
+  triggers = {
+    # This will always trigger on apply, but not during plan
+    always_run = timestamp()
+  }
 
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 data "external" "frontend_build" {
   program = ["bash", "${path.module}/frontend-build.sh"]
   query = {
     ENVIRONMENT    = local.environment
     S3_BUCKET_NAME = local.bucket_name
-    TF_COMMAND = terraform.workspace == "default" ? coalesce(terraform.workspace, "plan") : ""
+  }
+  # This will make the data source compute only during apply
+  lifecycle {
+    replace_triggered_by = [null_resource.prevent_plan]
   }
 }
 
