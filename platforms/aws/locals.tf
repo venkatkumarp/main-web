@@ -58,7 +58,7 @@ locals {
       tenantId    = "this-is-tenantid"
       redirectUri = "this-is-redirect-uri-value"
       code_challenge_method = "addmethod"
-      secret_name = "/tt/${local.environment}/client-secret"
+      secret_name = "/tt/${local.environment}/client-secretme"
       db_server  = "db_server"
       db_name  = "db_name"
       db_user   = "db_user"
