@@ -46,7 +46,7 @@ module "secrets_manager" {
     code_verifier  = var.code_verifier
     code_challenge = var.code_challenge
     journyx_password = var.journyx_password
-    db_password = var.db_password
+    cwid_db_password = var.cwid_db_password
   }
 }
 
