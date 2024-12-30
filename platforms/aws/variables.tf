@@ -19,3 +19,6 @@ variable "code_challenge" {
 }
 
 variable "commit_id" {}
+
+variable "journyx_password" {}
+variable "db_password" {}
