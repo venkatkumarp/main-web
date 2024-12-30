@@ -53,7 +53,7 @@ locals {
   }, var.aws_account_id, "null")*/ # working part
   secrets = lookup({
     "440744244651" = {
-      clientID   = "clientid_need_to_Add"
+      #clientID   = "clientid_need_to_Add"
       cdnurl    = "cdn_url_need_to_add"
       tenantId    = "this-is-tenantid"
       redirectUri = "this-is-redirect-uri-value"
