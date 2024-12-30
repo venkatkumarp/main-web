@@ -12,7 +12,10 @@ variable "environment" {
   type        = string
 }
 
-
+variable "config_values" {
+  description = "Key-value pairs for secret data"
+  type        = map(string)
+}
 variable "secret_values" {
   description = "Key-value pairs for secret data"
   type        = map(string)
