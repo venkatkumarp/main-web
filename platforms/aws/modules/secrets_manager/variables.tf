@@ -1,10 +1,3 @@
-/*variable "secret_name" {}
-variable "client_secret" {}
-variable "code_verifier" {}
-variable "code_challenge" {}*/
-
-#variable "aws_account_id" {}
-
 variable "project_name" {
   description = "Project name for S3 bucket"
   type        = string
@@ -19,7 +12,7 @@ variable "environment" {
   type        = string
 }
 
-####
+
 variable "secret_values" {
   description = "Key-value pairs for secret data"
   type        = map(string)
@@ -53,3 +46,9 @@ variable "code_challenge_method" {
   type        = string
 }
 
+variable "db_server" {}
+variable "db_name" {}
+variable "db_user" {}
+
+variable "journyx_url" {}
+variable "journyx_user" {}
