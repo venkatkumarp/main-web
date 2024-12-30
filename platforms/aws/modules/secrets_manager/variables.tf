@@ -23,10 +23,10 @@ variable "secret_name" {
 }
 
 
-variable "clientID" {
-description = "cleint ID"
-type = string
-}
+#variable "clientID" {
+#description = "cleint ID"
+#type = string
+#}
 variable "tenantId" {
   description = "Tenant ID for the secret"
   type        = string
