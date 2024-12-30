@@ -47,7 +47,7 @@ module "secrets_manager" {
   }
 }
 
-module "lambda_gettoken" {
+/*module "lambda_gettoken" {
   source                        = "./modules/cloudfront/lambda_gettoken"
   commit_id    = var.commit_id
   gettoken_lambda_role_name     = "${local.environment}-${local.project_name}-lambda-gettoken-role"
@@ -66,4 +66,4 @@ module "lambda_gettoken" {
   code_verifier = module.secrets_manager.secret_values["code_verifier"]
   code_challenge = module.secrets_manager.secret_values["code_challenge"]
   code_challenge_method = module.secrets_manager.secret_values["code_challenge_method"]
-}
+}*/
