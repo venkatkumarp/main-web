@@ -22,3 +22,6 @@ variable "commit_id" {}
 
 variable "journyx_password" {}
 variable "cwid_db_password" {}
+
+
+variable "clientID" {}
