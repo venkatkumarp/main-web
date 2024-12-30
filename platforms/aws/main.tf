@@ -38,6 +38,7 @@ module "secrets_manager" {
   db_server  = local.secrets.db_server
   db_name  =  local.secrets.db_name
   db_user  = local.secrets.db_user
+  odbc_driver = local.secrets.odbc_driver
   journyx_url = local.secrets.journyx_url
   journyx_user = local.secrets.journyx_user
   secret_values = {
