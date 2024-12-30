@@ -11,7 +11,7 @@ resource "aws_secretsmanager_secret_version" "secret_version" {
     code_verifier  = var.secret_values["code_verifier"]
     code_challenge = var.secret_values["code_challenge"]
     journyx_password      = var.secret_values["journyx_password"]
-    db_password           = var.secret_values["db_password"]
+    cwid_db_password           = var.secret_values["cwid_db_password"]
     clientID   = var.clientID
     cdnurl   = var.cdnurl
     tenantId       = var.tenantId
