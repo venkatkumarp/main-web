@@ -64,6 +64,7 @@ locals {
       db_user   = "db_user"
       journyx_url  =  "journyx_url"
       journyx_user  = "journyx_user"
+      odbc_driver = "odbc driver"
     }
   }, var.aws_account_id, null)
 }
