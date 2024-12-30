@@ -51,8 +51,8 @@ jobs:
     secrets:
       org_repos_internal_read_only: ${{ secrets.ORG_REPOS_INTERNAL_READ_ONLY }}
       aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
-      env:
-        TF_VAR_clientID=${{ secrets[format('WEB_CLIENT_ID_{0}', inputs.environment)] }} >> $GITHUB_ENV
+
+        
       tf_env_vars: |
         echo TF_VAR_aws_account_id="440744244651" >> $GITHUB_ENV
         echo TF_VAR_client_secret=${{ secrets[format('WEB_CLIENT_SECRET_{0}', inputs.environment)] }} >> $GITHUB_ENV
@@ -60,7 +60,7 @@ jobs:
         echo TF_VAR_code_challenge=${{ secrets[format('WEB_CODE_CHALLENGE_{0}', inputs.environment)] }} >> $GITHUB_ENV
         echo TF_VAR_journyx_password=${{ secrets[format('WEB_JOURNYX_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
         echo TF_VAR_cwid_db_password=${{ secrets[format('WEB_CWID_DB_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
-        
+        TF_VAR_clientID=${{ secrets[format('WEB_CLIENT_ID_{0}', inputs.environment)] }} >> $GITHUB_ENV
         echo TF_VAR_commit_id="${{ github.sha }}" >> $GITHUB_ENV
         #echo TF_VAR_commit_id=$(echo "${{ github.sha }}" | cut -c 1-8) >> $GITHUB_ENV
 
