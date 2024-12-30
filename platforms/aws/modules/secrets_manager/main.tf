@@ -20,6 +20,7 @@ resource "aws_secretsmanager_secret_version" "secret_version" {
     db_server  = var.db_server
     db_name  = var.db_name
     db_user   = var.db_user
+    odbc_driver = var.odbc_driver
     journyx_url  =  var.journyx_url
     journyx_user  = var.journyx_user
   })
