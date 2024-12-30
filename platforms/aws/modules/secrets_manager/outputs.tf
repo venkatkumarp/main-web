@@ -7,8 +7,4 @@ output "secret_values" {
   value = jsondecode(aws_secretsmanager_secret_version.secret_version.secret_string)
 }
 
-output "config_values" {
-  description = "The key-value pairs of secret values"
-  value = jsondecode(aws_secretsmanager_secret_version.secret_version.secret_string)
-}
 
