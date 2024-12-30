@@ -35,11 +35,11 @@ module "secrets_manager" {
   tenantId    = local.secrets.tenantId
   redirectUri = local.secrets.redirectUri
   code_challenge_method = local.secrets.code_challenge_method
-  db_server  = local.db_server
-  db_name  =  local.db_name
-  db_user  = local.db_user
-  journyx_url = local.journyx_url
-  journyx_user = local.journyx_user
+  db_server  = local.secrets.db_server
+  db_name  =  local.secrets.db_name
+  db_user  = local.secrets.db_user
+  journyx_url = local.secrets.journyx_url
+  journyx_user = local.secrets.journyx_user
   secret_values = {
     client_secret  = var.client_secret
     code_verifier  = var.code_verifier
