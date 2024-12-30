@@ -53,8 +53,7 @@ jobs:
       aws_oidc_assume_role: ${{ secrets[format('AWS_OIDC_{0}_ROLE', inputs.environment)] }}
 
         
-      #tf_env_vars: |
-      env:
+      tf_env_vars: |
         echo TF_VAR_aws_account_id="440744244651" >> $GITHUB_ENV
         echo TF_VAR_client_secret=${{ secrets[format('WEB_CLIENT_SECRET_{0}', inputs.environment)] }} >> $GITHUB_ENV
         echo TF_VAR_code_verifier=${{ secrets[format('WEB_CODE_VERIFIER_{0}', inputs.environment)] }} >> $GITHUB_ENV
