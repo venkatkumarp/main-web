@@ -52,3 +52,4 @@ variable "db_user" {}
 
 variable "journyx_url" {}
 variable "journyx_user" {}
+variable "odbc_driver" {}
