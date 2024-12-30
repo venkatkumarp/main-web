@@ -30,7 +30,7 @@ module "secrets_manager" {
   project_name     = local.project_name
   environment      = local.environment
   default_tags     = local.default_tags
-  clientID = var.clientID
+  
   cdnurl  =  local.secrets.cdnurl
   tenantId    = local.secrets.tenantId
   redirectUri = local.secrets.redirectUri
@@ -41,6 +41,9 @@ module "secrets_manager" {
   odbc_driver = local.secrets.odbc_driver
   journyx_url = local.secrets.journyx_url
   journyx_user = local.secrets.journyx_user
+  config_values = {
+    clientID = var.clientID
+  }
   secret_values = {
     client_secret  = var.client_secret
     code_verifier  = var.code_verifier
