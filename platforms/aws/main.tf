@@ -30,7 +30,7 @@ module "secrets_manager" {
   project_name     = local.project_name
   environment      = local.environment
   default_tags     = local.default_tags
-
+  clientid = var.clientID
   cdnurl  =  local.secrets.cdnurl
   tenantId    = local.secrets.tenantId
   redirectUri = local.secrets.redirectUri
@@ -48,7 +48,7 @@ module "secrets_manager" {
     code_challenge = var.code_challenge
     journyx_password = var.journyx_password
     cwid_db_password = var.cwid_db_password
-    clientID = var.clientID
+    
     
   }
 }
