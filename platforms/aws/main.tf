@@ -30,7 +30,7 @@ module "secrets_manager" {
   project_name     = local.project_name
   environment      = local.environment
   default_tags     = local.default_tags
-  clientid = var.clientID
+  clientid = var.clientid
   cdnurl  =  local.secrets.cdnurl
   tenantId    = local.secrets.tenantId
   redirectUri = local.secrets.redirectUri
