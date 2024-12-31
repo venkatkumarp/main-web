@@ -24,4 +24,4 @@ variable "journyx_password" {}
 variable "cwid_db_password" {}
 
 
-variable "clientID" {}
+variable "clientid" {}
