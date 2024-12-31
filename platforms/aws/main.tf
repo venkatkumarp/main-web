@@ -52,7 +52,9 @@ module "secrets_manager" {
     
   }
 }
-
+output "clientid" {
+  value = var.clientid
+}
 /*module "lambda_gettoken" {
   source                        = "./modules/cloudfront/lambda_gettoken"
   commit_id    = var.commit_id
