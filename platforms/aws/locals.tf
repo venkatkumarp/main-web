@@ -53,7 +53,6 @@ locals {
   }, var.aws_account_id, "null")*/ # working part
   secrets = lookup({
     "440744244651" = {
-      db_user = "postgresql"
       clientID   = "clientid_need_to_Add"
       cdnurl    = "cdn_url_need_to"
       tenantId    = "this-is-tenantid"
