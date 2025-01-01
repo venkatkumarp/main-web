@@ -54,22 +54,17 @@ locals {
   secrets = lookup({
     "440744244651" = {
       db_user = "postgresql"
-      #clientID   = "clientid_need_to_Add"
-      #cdnurl    = "cdn_url_need_to"
-      #tenantId    = "this-is-tenantid"
-      #redirectUri = "this-is-redirect-uri-value"
-      #code_challenge_method = "addmethod"
-      #secret_name = "/tt/${local.environment}/client-secretme"
-      #db_server  = "db_server"
-      #db_name  = "db_name"
-      #db_user   = "db_user"
-      #journyx_url  =  "journyx_url"
-      #journyx_user  = "journyx_user"
-      #odbc_driver = "odbc driver"
+      clientID   = "clientid_need_to_Add"
+      cdnurl    = "cdn_url_need_to"
+      tenantId    = "this-is-tenantid"
+      redirectUri = "this-is-redirect-uri-value"
+      code_challenge_method = "addmethod"
     }
   }, var.aws_account_id, null)
 
   # Dynamically construct the secret names based on environment
-  secret_1_name = "/tt/${local.environment}/secret-1"
-  secret_2_name = "/tt/${local.environment}/secret-2"
+  web_secrets = "/tt/${local.environment}/web-secrets-1"
+  cwid_db_secrets = "/tt/${local.environment}/cwid-db-secrets"
+  sap_hana_secrets = "/tt/${local.environment}/sap-secrets"
+  journyx_secrets = "/tt/${local.environment}/journyx-secrets"
 }

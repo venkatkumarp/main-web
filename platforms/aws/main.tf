@@ -4,32 +4,49 @@ data "aws_region" "current" {}
 
 ###################################
 
-/*module "secret_1" {
-  source        = "./modules/secrets_manager"
-  secret_name   = "/ttm/example-secret-1"
-  db_user  =  local.secrets.db_user
-  secret_values = {
-    secret_password = var.secret_password
-  }
-}*/
-
 module "secrets_manager" {
   source = "./modules/secrets_manager"
 
   secrets = {
-    "${local.secret_1_name}" = {
+    "${local.web_secrets}" = {
       description = "Secret 1 for application A"
       secret_values = {
-        secret_password = var.secret_password
-        db_user         = local.secrets.db_user
+        cdnurl  =  local.secrets.cdnurl
+        tenantId    = local.secrets.tenantId
+        redirectUri = local.secrets.redirectUri
+        code_challenge_method = local.secrets.code_challenge_method
+        client_secret  = var.client_secret
+        code_verifier  = var.code_verifier
+        code_challenge = var.code_challenge
       }
     }
 
-    "${local.secret_2_name}" = {
-      description = "Secret 2 for application B"
+    "${local.cwid_db_secrets}" = {
+      description = "Secret for cwid db"
       secret_values = {
-        api_key    = "API_KEY_123"
-        api_secret = "SECRET_ABC"
+        #db_user         = local.secrets.db_user
+        db_server = var.db_server 
+        database_name = var.database_name
+        db_user = var.db_user
+        db_password = var.db_password
+        db_driver = var.db_driver
+
+      }
+    }
+    "${local.sap_hana_secrets}" = {
+      description = "Secret for sap hana secrets"
+      secret_values = {
+        sapuser = var.sapuser
+        sapid = var.sapid
+      }
+    }
+
+    "${local.journyx_secrets}" = {
+      description = "Secret  for journyx secrets"
+      secret_values = {
+        JXURL = var.JXURL
+        JOURNYX_USER = var.JOURNYX_USER
+        JOURNYX_PASSWORD = var.JOURNYX_PASSWORD
       }
     }
   }

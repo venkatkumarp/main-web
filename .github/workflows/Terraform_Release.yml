@@ -54,11 +54,24 @@ jobs:
 
       tf_env_vars: |
         echo TF_VAR_aws_account_id="440744244651" >> $GITHUB_ENV
-        echo TF_VAR_secret_password=${{ secrets[format('WEB_PASSWORD_SECRET_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_client_secret=${{ secrets[format('WEB_CLIENT_SECRET_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_code_verifier=${{ secrets[format('WEB_CODE_VERIFIER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_code_challenge=${{ secrets[format('WEB_CODE_CHALLENGE_{0}', inputs.environment)] }} >> $GITHUB_ENV
 
-        #echo TF_VAR_client_secret=${{ secrets[format('WEB_CLIENT_SECRET_{0}', inputs.environment)] }} >> $GITHUB_ENV
-        #echo TF_VAR_code_verifier=${{ secrets[format('WEB_CODE_VERIFIER_{0}', inputs.environment)] }} >> $GITHUB_ENV
-        #echo TF_VAR_code_challenge=${{ secrets[format('WEB_CODE_CHALLENGE_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        #### cwid db details
+        echo TF_VAR_db_server=${{ secrets[format('WEB_DB_SERVER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_database_name=${{ secrets[format('WEB_DATABASE_NAME_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_db_user=${{ secrets[format('WEB_DB_USER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_db_password=${{ secrets[format('WEB_DB_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_db_driver=${{ secrets[format('WEB_DB_DRIVER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+
+        echo TF_VAR_JXURL=${{ secrets[format('WEB_JXURL_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_JOURNYX_USER=${{ secrets[format('WEB_JOURNYX_USER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_JOURNYX_PASSWORD=${{ secrets[format('WEB_JOURNYX_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
+
+        echo TF_VAR_sapuser=${{ secrets[format('WEB_SAP_USER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_sapid=${{ secrets[format('WEB_SAP_ID_{0}', inputs.environment)] }} >> $GITHUB_ENV
+
         #echo TF_VAR_journyx_password=${{ secrets[format('WEB_JOURNYX_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
         #echo TF_VAR_cwid_db_password=${{ secrets[format('WEB_CWID_DB_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
         ##echo TF_VAR_clientid: ${{ secrets[format('WEB_CLIENT_ID_{0}', inputs.environment)] }}" >> $GITHUB_ENV
