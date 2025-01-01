@@ -30,8 +30,9 @@ variable "s3_bucket_name" {
   description = "The S3 bucket name to use for downloading the Lambda code"
   type        = string
 }
+varaible "web_secrets" {}
 ########################
-variable "clientID" {
+/*variable "clientID" {
   description = "Client ID"
   type        = string
 }
@@ -69,7 +70,7 @@ variable "code_challenge" {
 variable "code_challenge_method" {
   description = "Code Challenge"
   type        = string
-}
+}*/
 
 variable "commit_id" {
   description = "The commit ID from GitHub Actions"
