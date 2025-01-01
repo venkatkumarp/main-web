@@ -30,7 +30,7 @@ variable "s3_bucket_name" {
   description = "The S3 bucket name to use for downloading the Lambda code"
   type        = string
 }
-varaible "web_secrets" {}
+variable "web_secrets" {}
 ########################
 /*variable "clientID" {
   description = "Client ID"
