@@ -53,18 +53,19 @@ locals {
   }, var.aws_account_id, "null")*/ # working part
   secrets = lookup({
     "440744244651" = {
+      db_user = "postgresql"
       #clientID   = "clientid_need_to_Add"
-      cdnurl    = "cdn_url_need_to"
-      tenantId    = "this-is-tenantid"
-      redirectUri = "this-is-redirect-uri-value"
-      code_challenge_method = "addmethod"
-      secret_name = "/tt/${local.environment}/client-secretme"
-      db_server  = "db_server"
-      db_name  = "db_name"
-      db_user   = "db_user"
-      journyx_url  =  "journyx_url"
-      journyx_user  = "journyx_user"
-      odbc_driver = "odbc driver"
+      #cdnurl    = "cdn_url_need_to"
+      #tenantId    = "this-is-tenantid"
+      #redirectUri = "this-is-redirect-uri-value"
+      #code_challenge_method = "addmethod"
+      #secret_name = "/tt/${local.environment}/client-secretme"
+      #db_server  = "db_server"
+      #db_name  = "db_name"
+      #db_user   = "db_user"
+      #journyx_url  =  "journyx_url"
+      #journyx_user  = "journyx_user"
+      #odbc_driver = "odbc driver"
     }
   }, var.aws_account_id, null)
 }

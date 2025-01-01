@@ -2,6 +2,44 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
+###################################
+
+/*module "secret_1" {
+  source        = "./modules/secrets_manager"
+  secret_name   = "/ttm/example-secret-1"
+  db_user  =  local.secrets.db_user
+  secret_values = {
+    secret_password = var.secret_password
+  }
+}*/
+
+module "secrets_manager" {
+  source = "./modules/secrets_manager"
+
+  secrets = {
+    "/ttm/example-secret-1" = {
+      description = "Secret 1 for application A"
+      secret_values = {
+        secret_password = var.secret_password
+        db_user         = local.secrets.db_user
+      }
+    }
+
+    "/ttm/example-secret-2" = {
+      description = "Secret 2 for application B"
+      secret_values = {
+        api_key    = "API_KEY_123"
+        api_secret = "SECRET_ABC"
+      }
+    }
+  }
+}
+
+
+
+
+
+###################################
 /*module "lambda_code_bucket" {
   source             = "./modules/lambda_code_bucket"
   lambda_bucket_name = "web.${local.environment}.time-test.com"
@@ -22,7 +60,8 @@ module "secrets_manager" {
   code_challenge   = local.web_secrets[var.aws_account_id].code_challenge              
 }*/
 
-module "secrets_manager" {
+##working below one
+/*module "secrets_manager" {
   source        = "./modules/secrets_manager"
   # secret_name   = local.secret_name
   secret_name   = local.secrets.secret_name
@@ -54,7 +93,7 @@ module "secrets_manager" {
 }
 output "clientid" {
   value = var.clientid
-}
+}*/
 /*module "lambda_gettoken" {
   source                        = "./modules/cloudfront/lambda_gettoken"
   commit_id    = var.commit_id

@@ -3,25 +3,28 @@ variable "aws_account_id" {
   description = "Account ID AWS"
 }
 
-variable "client_secret" {
-  description = "Client secret for the environment"
-  type        = string
-}
+#variable "client_secret" {
+#  description = "Client secret for the environment"
+#  type        = string
+#}
 
-variable "code_verifier" {
-  description = "Code verifier for the environment"
-  type        = string
-}
+#variable "code_verifier" {
+#  description = "Code verifier for the environment"
+#  type        = string
+#}
 
-variable "code_challenge" {
-  description = "Code challenge for the environment"
-  type        = string
-}
+#variable "code_challenge" {
+#  description = "Code challenge for the environment"
+#  type        = string
+#}
 
-variable "commit_id" {}
+#variable "commit_id" {}
 
-variable "journyx_password" {}
-variable "cwid_db_password" {}
+#variable "journyx_password" {}
+#variable "cwid_db_password" {}
 
 
-variable "clientid" {}
+#variable "clientid" {}
+
+
+variable "secret_password" {}
