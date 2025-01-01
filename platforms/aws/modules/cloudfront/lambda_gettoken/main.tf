@@ -4,14 +4,14 @@
   # output_path = "./modules/cloudfront/point-handler-${var.commit_id}.zip"
  # output_path = "point-handler-${var.commit_id}.zip"
 #}
-resource "aws_lambda_layer_version" "backend_layer" {
+/*resource "aws_lambda_layer_version" "backend_layer" {
   filename         = data.archive_file.lambda_layer_zip.output_path
   layer_name       = "${var.environment}-${var.project_name}-layer"
   compatible_runtimes = ["python3.12"]
   s3_bucket        = var.s3_bucket_name
   s3_key           = "tt_lambda_layer.zip"
   description      = "Layer containing dependencies for the Lambda function"
-}
+}*/
 ##############
 resource "aws_iam_role" "gettoken_lambda_role" {
   name = var.gettoken_lambda_role_name
