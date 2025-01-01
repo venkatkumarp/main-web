@@ -17,7 +17,7 @@ module "secrets_manager" {
   source = "./modules/secrets_manager"
 
   secrets = {
-    local.secret_1_name = {
+    "${local.secret_1_name}" = {
       description = "Secret 1 for application A"
       secret_values = {
         secret_password = var.secret_password
@@ -25,7 +25,7 @@ module "secrets_manager" {
       }
     }
 
-    local.secret_2_name = {
+    "${local.secret_2_name} = {
       description = "Secret 2 for application B"
       secret_values = {
         api_key    = "API_KEY_123"
