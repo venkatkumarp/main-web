@@ -111,7 +111,7 @@ module "secrets_manager" {
 output "clientid" {
   value = var.clientid
 }*/
-/*module "lambda_gettoken" {
+module "lambda_gettoken" {
   source                        = "./modules/cloudfront/lambda_gettoken"
   commit_id    = var.commit_id
   gettoken_lambda_role_name     = "${local.environment}-${local.project_name}-lambda-gettoken-role"
@@ -121,7 +121,7 @@ output "clientid" {
   default_tags                  = local.default_tags
   secret_manager                = module.secrets_manager.secret_arn
   #secret_arn   = module.secrets_manager.secret_arn
-  s3_bucket_name                = local.s3_bucket_name
+  #s3_bucket_name                = local.s3_bucket_name
   clientID     = module.secrets_manager.secret_values["clientID"]
   cdnurl       = module.secrets_manager.secret_values["cdnurl"]
   tenantId     = module.secrets_manager.secret_values["tenantId"]
@@ -130,4 +130,4 @@ output "clientid" {
   code_verifier = module.secrets_manager.secret_values["code_verifier"]
   code_challenge = module.secrets_manager.secret_values["code_challenge"]
   code_challenge_method = module.secrets_manager.secret_values["code_challenge_method"]
-}*/
+}
