@@ -25,7 +25,7 @@ module "secrets_manager" {
       }
     }
 
-    "${local.secret_2_name} = {
+    "${local.secret_2_name}" = {
       description = "Secret 2 for application B"
       secret_values = {
         api_key    = "API_KEY_123"
