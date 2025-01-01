@@ -77,13 +77,14 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
   environment {
     variables = {
       ENVIRONMENT = var.environment
-      CLIENT_ID       = var.clientID
-      CDN_URL         = var.cdnurl
-      TENANT_ID       = var.tenantId
-      REDIRECT_URI    = var.redirectUri
-      CODE_VERIFIER   = var.code_verifier
-      CODE_CHALLENGE  = var.code_challenge
-      CODE_CHALLENGE_METHOD = var.code_challenge_method
+      web_secrets = var.web_secrets
+      #CLIENT_ID       = var.clientID
+      #CDN_URL         = var.cdnurl
+      #TENANT_ID       = var.tenantId
+      #REDIRECT_URI    = var.redirectUri
+      #CODE_VERIFIER   = var.code_verifier
+      #CODE_CHALLENGE  = var.code_challenge
+      #CODE_CHALLENGE_METHOD = var.code_challenge_method
     }
   }
 }
