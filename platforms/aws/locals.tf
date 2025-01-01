@@ -68,4 +68,8 @@ locals {
       #odbc_driver = "odbc driver"
     }
   }, var.aws_account_id, null)
+
+  # Dynamically construct the secret names based on environment
+  secret_1_name = "/tt/${local.environment}/secret-1"
+  secret_2_name = "/tt/${local.environment}/secret-2"
 }
