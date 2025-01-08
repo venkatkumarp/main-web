@@ -1,5 +1,5 @@
 import json
-# import pyodbc
+import pyodbc
 import requests
 from repositories.fetch_update_user_data import get_user_info_from_jx
 from utils import utility_file
