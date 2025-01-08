@@ -62,8 +62,8 @@ locals {
   }, var.aws_account_id, null)
 
   # Dynamically construct the secret names based on environment
-  web_secrets = "/tt/${local.environment}/web-secrets-1"
-  cwid_db_secrets = "/tt/${local.environment}/cwid-db-secrets"
-  sap_hana_secrets = "/tt/${local.environment}/sap-secrets"
-  journyx_secrets = "/tt/${local.environment}/journyx-secrets"
+  web_secrets = "/tt/${local.environment}/web-secrets-2"
+  cwid_db_secrets = "/tt/${local.environment}/cwid-db-secrets-1"
+  sap_hana_secrets = "/tt/${local.environment}/sap-secrets-1"
+  journyx_secrets = "/tt/${local.environment}/journyx-secrets-1"
 }
