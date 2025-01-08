@@ -21,8 +21,11 @@
 ##CMD ["start.handler"]
 
 FROM public.ecr.aws/lambda/python:3.12
+RUN yum update -y && \
+    yum install -y unixODBC unixODBC-devel
 
-RUN dnf install -y unixODBC unixODBC-devel
+# Install pyodbc
+RUN pip install pyodbc
 
 RUN pip install poetry
 
