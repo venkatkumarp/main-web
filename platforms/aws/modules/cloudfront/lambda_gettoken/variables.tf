@@ -72,7 +72,7 @@ variable "code_challenge_method" {
   type        = string
 }*/
 
-variable "commit_id" {
+/*variable "commit_id" {
   description = "The commit ID from GitHub Actions"
   type        = string
-}
+}*/
