@@ -113,7 +113,7 @@ output "clientid" {
 }*/
 module "lambda_gettoken" {
   source                        = "./modules/cloudfront/lambda_gettoken"
-  commit_id    = var.commit_id
+  #commit_id    = var.commit_id
   gettoken_lambda_role_name     = "${local.environment}-${local.project_name}-lambda-gettoken-role"
   gettoken_lambda_function_name = "${local.environment}-${local.project_name}-lambda-gettoken-function"
   project_name                  = local.project_name
