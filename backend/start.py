@@ -5,7 +5,6 @@ from mangum import Mangum
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from config import Settings
-# from config import config as config_apps
 
 API_VERSION = '/api/v1'
 
@@ -26,8 +25,8 @@ You are able to try out everything here but if you prefer the redoc, visit ` /re
 
 **PH RND Time Tracking Engineering Team**, `54fe7143.bayergroup.onmicrosoft.com@emea.teams.ms`
 
-""",
-    root_path=os.environ.get('environment_selected')
+"""
+    # root_path="{}{}".format(os.environ.get('api_stage'), os.environ.get('environment_selected'))
 )
 
 settings = Settings()
@@ -47,4 +46,3 @@ handler = Mangum(app)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
-    # uvicorn.run(app, host="localhost", port=8080)

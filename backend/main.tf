@@ -32,7 +32,6 @@ locals {
     managed_by  = "terraform"
     Repository  = "https://github.com/bayer-int/ph-rd-time-tracking-web"
   }
-
 }
 
 provider "aws" {
@@ -67,11 +66,11 @@ locals {
   environment_suffix = lookup(local.suffixes, var.aws_account_id, "")
 
   environments = {
-    "440744244651" = "dev"
+    "590183961751" = "dev"
   }
 
   suffixes = {
-    "440744244651" = "dev"
+    "590183961751" = "dev"
   }
 
   aws_region = "eu-central-1"
@@ -79,19 +78,18 @@ locals {
 
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
-  # Mapping of account IDs to Lambda function names
   lambda_function_names = lookup({
-    "440744244651" = "image"
+    "590183961751" = "dev-time-tracking-fastapi-function"
   }, var.aws_account_id, null)
 
-  # Mapping of account IDs to ECR repositories
   ecr_repo_names = lookup({
-    "440744244651" = "test-repo"
+    "590183961751" = "dev-time-tracking-ecr"
   }, var.aws_account_id, null)
 
   image_tags = lookup({
-    "440744244651" = "api-latest"
+    "590183961751" = "api-latest"
   }, var.aws_account_id, null)
+
 }
 
 ################################################################
@@ -110,7 +108,6 @@ data "external" "backend_deploy" {
     ecr_registry         = "${var.aws_account_id}.dkr.ecr.${local.aws_region}.amazonaws.com"
     image_tag            = local.image_tags
     region               = local.aws_region
-    is_apply             = "${terraform.workspace == "default" ? "true" : "false"}" 
   }
 }
 
@@ -119,32 +116,27 @@ data "external" "backend_deploy" {
 ##  Outputs from the Frontend Build Process                   ##
 ##                                                            ##
 ################################################################
-# Output the Lambda function name
+
 output "lambda_function_name" {
   value = data.external.backend_deploy.result.lambda_function
 }
 
-# Output the ECR repository name
 output "ecr_repo_name" {
   value = data.external.backend_deploy.result.ecr_repo
 }
 
-# Output the environment
 output "deployment_environment" {
   value = data.external.backend_deploy.result.environment
 }
 
-# Output the ECR registry
 output "ecr_registry" {
   value = data.external.backend_deploy.result.ecr_registry
 }
 
-# Output the image tag
 output "image_tag" {
   value = data.external.backend_deploy.result.image_tag
 }
 
-# Output the AWS region
 output "aws_region" {
   value = data.external.backend_deploy.result.aws_region
 }

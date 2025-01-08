@@ -13,29 +13,6 @@ command -v aws >/dev/null 2>&1 || { log "AWS CLI is not installed"; exit 1; }
 
 # Read input
 input_data=$(cat)
-is_apply=$(echo "$input_data" | jq -r '.is_apply // "false"')
-
-# Skip during plan phase and return default JSON
-if [[ "$is_apply" != "true" ]]; then
-    jq -n \
-      --arg lambda_function "not-executed" \
-      --arg ecr_repo "not-executed" \
-      --arg environment "not-executed" \
-      --arg ecr_registry "not-executed" \
-      --arg image_tag "not-executed" \
-      --arg aws_region "not-executed" \
-      '{
-        lambda_function: $lambda_function,
-        ecr_repo: $ecr_repo,
-        environment: $environment,
-        ecr_registry: $ecr_registry,
-        image_tag: $image_tag,
-        aws_region: $aws_region
-      }'
-    exit 0
-fi
-
-# Validate required parameters
 lambda_function_name=$(echo "$input_data" | jq -r '.lambda_function_name // empty')
 ecr_repo_name=$(echo "$input_data" | jq -r '.ecr_repo_name // empty')
 environment=$(echo "$input_data" | jq -r '.environment // empty')
@@ -43,6 +20,7 @@ ecr_registry=$(echo "$input_data" | jq -r '.ecr_registry // empty')
 image_tag=$(echo "$input_data" | jq -r '.image_tag // empty')
 aws_region=$(echo "$input_data" | jq -r '.region // empty')
 
+# Validate required parameters
 if [[ -z "$lambda_function_name" || -z "$ecr_repo_name" || -z "$ecr_registry" || -z "$image_tag" || -z "$aws_region" ]]; then
     log "Error: Missing required parameters"
     log "Required: lambda_function_name, ecr_repo_name, ecr_registry, image_tag, aws_region"
