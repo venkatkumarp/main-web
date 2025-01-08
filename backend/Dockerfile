@@ -23,6 +23,11 @@ RUN dnf update -y && \
 
 # Install pyodbc
 RUN pip install pyodbc
+# Verify pyodbc installation
+RUN python -c "import pyodbc; print(f'pyodbc version: {pyodbc.__version__}')"
+
+# Verify unixODBC installation
+RUN odbcinst -j || echo "unixODBC not installed properly"
 
 RUN pip install poetry
 
