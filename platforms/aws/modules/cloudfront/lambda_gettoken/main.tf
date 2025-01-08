@@ -65,7 +65,7 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
   handler       = "point-handler.point_handler"
   #filename      = data.archive_file.lambda_zip.output_path
   s3_bucket     = var.s3_bucket_name
-  s3_key        = "tt_lambda_function.zip"
+  s3_key        = "tt_backend.zip"
   publish       = true
   memory_size   = 1024
   ephemeral_storage {
