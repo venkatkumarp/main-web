@@ -16,9 +16,9 @@ variable "secrets" {
   }))
 }
 
-/*output "secret_arn" {
-  value = { for k, v in aws_secretsmanager_secret.this : k => v.arn }
-}*/
 output "secret_arn" {
+  value = { for k, v in aws_secretsmanager_secret.this : k => v.arn }
+}
+output "secret_values" {
   value = { for k, v in aws_secretsmanager_secret_version.this : k => jsondecode(v.secret_string) }
 }
