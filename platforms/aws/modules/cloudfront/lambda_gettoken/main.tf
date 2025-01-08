@@ -72,7 +72,7 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
     size = 512
   }
   # Reference to Lambda Layer
-  layers = [aws_lambda_layer_version.backend_layer.arn]
+  # layers = [aws_lambda_layer_version.backend_layer.arn]
 
   environment {
     variables = {
