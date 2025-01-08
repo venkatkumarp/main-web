@@ -124,6 +124,15 @@ module "lambda_gettoken" {
   web_secrets = local.web_secrets
   #secret_arn   = module.secrets_manager.secret_arn
   s3_bucket_name                = local.s3_bucket_name
+  # Pass individual secrets to the Lambda module
+  clientID                      = module.secrets_manager.secret_values[local.web_secrets]["clientID"]
+  cdnurl                        = module.secrets_manager.secret_values[local.web_secrets]["cdnurl"]
+  tenantId                      = module.secrets_manager.secret_values[local.web_secrets]["tenantId"]
+  redirectUri                   = module.secrets_manager.secret_values[local.web_secrets]["redirectUri"]
+  code_verifier                 = module.secrets_manager.secret_values[local.web_secrets]["code_verifier"]
+  code_challenge                = module.secrets_manager.secret_values[local.web_secrets]["code_challenge"]
+  code_challenge_method         = module.secrets_manager.secret_values[local.web_secrets]["code_challenge_method"]
+
   #clientID     = module.secrets_manager.secret_values["clientID"]
   #cdnurl       = module.secrets_manager.secret_values["cdnurl"]
   #tenantId     = module.secrets_manager.secret_values["tenantId"]
