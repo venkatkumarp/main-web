@@ -8,7 +8,7 @@ module "secrets_manager" {
   source = "./modules/secrets_manager"
 
   secrets = {
-    "${local.web_secrets}" = {
+    "${local.secrets.web_secrets}" = {
       description = "Secret 1 for application A"
       secret_values = {
         cdnurl  =  local.secrets.cdnurl
