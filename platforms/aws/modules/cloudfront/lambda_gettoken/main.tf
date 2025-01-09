@@ -77,7 +77,7 @@ resource "aws_lambda_function" "gettoken_lambda_function" {
   environment {
     variables = {
       ENVIRONMENT = var.environment
-      web_secrets = var.web_secrets
+      #web_secrets = var.web_secrets
       CLIENT_ID       = var.clientID
       CDN_URL         = var.cdnurl
       TENANT_ID       = var.tenantId
