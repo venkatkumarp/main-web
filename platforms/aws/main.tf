@@ -119,8 +119,8 @@ module "lambda_gettoken" {
   environment                   = local.environment
   default_tags                  = local.default_tags
   #secret_manager                = module.secrets_manager.secret_arn
-  ##secret_manager                = module.secrets_manager.secret_arn[local.secrets.web_secrets]
-  web_secrets = local.secrets.web_secrets
+  secret_manager                = module.secrets_manager.secret_arn[local.secrets.web_secrets]
+  ##web_secrets = local.secrets.web_secrets
   #secret_arn   = module.secrets_manager.secret_arn
   s3_bucket_name                = local.s3_bucket_name
 
