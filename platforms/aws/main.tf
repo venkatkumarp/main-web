@@ -126,11 +126,11 @@ module "lambda_gettoken" {
   s3_bucket_name                = local.s3_bucket_name
 
 
-  clientID     = module.secrets_manager.secret_values[web-secrets-2]["clientID"]
-  cdnurl       = module.secrets_manager.secret_values[web-secrets-2]["cdnurl"]
-  tenantId     = module.secrets_manager.secret_values[web-secrets-2]["tenantId"]
-  redirectUri  = module.secrets_manager.secret_values[web-secrets-2]["redirectUri"]
-  code_verifier = module.secrets_manager.secret_values[web-secrets-2]["code_verifier"]
-  code_challenge = module.secrets_manager.secret_values[web-secrets-2]["code_challenge"]
-  code_challenge_method = module.secrets_manager.secret_values[web-secrets-2]["code_challenge_method"]
+  clientID     = module.secrets_manager.secret_values["web-secrets-2"]["clientID"]
+  cdnurl       = module.secrets_manager.secret_values["web-secrets-2"]["cdnurl"]
+  tenantId     = module.secrets_manager.secret_values["web-secrets-2"]["tenantId"]
+  redirectUri  = module.secrets_manager.secret_values["web-secrets-2"]["redirectUri"]
+  code_verifier = module.secrets_manager.secret_values["web-secrets-2"]["code_verifier"]
+  code_challenge = module.secrets_manager.secret_values["web-secrets-2"]["code_challenge"]
+  code_challenge_method = module.secrets_manager.secret_values["web-secrets-2"]["code_challenge_method"]
 }
