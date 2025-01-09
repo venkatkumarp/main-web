@@ -30,5 +30,11 @@ variable "JOURNYX_USER" {}
 variable "JOURNYX_PASSWORD" {}
 
 #SAP details
-variable "sapuser" {}
-variable "sapid" {}
+#variable "sapuser" {}
+#variable "sapid" {}
+variable "db_username" {}
+variable "db_password" {}
+variable "db_url" {}
+variable "db_table" {}
+variable "driver_name" {}
+variable "s3_bucket_name" {}
