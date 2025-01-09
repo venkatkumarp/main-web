@@ -23,12 +23,17 @@ module "secrets_manager" {
     "${local.cwid_db_secrets}" = {
       description = "Secret for cwid db"
       secret_values = {
-        #db_user         = local.secrets.db_user
-        db_server = var.db_server 
-        database_name = var.database_name
-        db_user = var.db_user
-        db_password = var.db_password
-        db_driver = var.db_driver
+        CWID_DB_SERVER = var.CWID_DB_SERVER
+        CWID_DATABASE  = var.CWID_DATABASE
+        CWID_DB_USERNAME = var.CWID_DB_USERNAME
+        CWID_DB_PASSWORD = var.CWID_DB_PASSWORD
+        CWID_DB_DRIVER = var.CWID_DB_DRIVER
+
+        #db_server = var.db_server 
+        #database_name = var.database_name
+        #db_user = var.db_user
+        #db_password = var.db_password
+        #db_driver = var.db_driver
 
       }
     }
