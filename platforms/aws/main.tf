@@ -40,8 +40,14 @@ module "secrets_manager" {
     "${local.sap_hana_secrets}" = {
       description = "Secret for sap hana secrets"
       secret_values = {
-        sapuser = var.sapuser
-        sapid = var.sapid
+        #sapuser = var.sapuser
+        #sapid = var.sapid
+        db_username = var.db_username
+        db_password = var.db_password
+        db_url = var.db_url
+        db_table = var.db_table
+        driver_name = var.driver_name
+        s3_bucket_name = var.s3_bucket_name
       }
     }
 
