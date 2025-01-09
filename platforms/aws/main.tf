@@ -13,6 +13,7 @@ module "secrets_manager" {
     "${local.secrets.web_secrets}" = {
       description = "Secret for web secrets"
       secret_values = {
+        clientID = local.secrets.clientID
         cdnurl  =  local.secrets.cdnurl
         tenantId    = local.secrets.tenantId
         redirectUri = local.secrets.redirectUri
