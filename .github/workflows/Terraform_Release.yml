@@ -59,11 +59,11 @@ jobs:
         echo TF_VAR_code_challenge=${{ secrets[format('WEB_CODE_CHALLENGE_{0}', inputs.environment)] }} >> $GITHUB_ENV
 
         #### cwid db details
-        echo TF_VAR_db_server=${{ secrets[format('WEB_DB_SERVER_{0}', inputs.environment)] }} >> $GITHUB_ENV
-        echo TF_VAR_database_name=${{ secrets[format('WEB_DATABASE_NAME_{0}', inputs.environment)] }} >> $GITHUB_ENV
-        echo TF_VAR_db_user=${{ secrets[format('WEB_DB_USER_{0}', inputs.environment)] }} >> $GITHUB_ENV
-        echo TF_VAR_db_password=${{ secrets[format('WEB_DB_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
-        echo TF_VAR_db_driver=${{ secrets[format('WEB_DB_DRIVER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_CWID_DB_SERVER=${{ secrets[format('WEB_DB_SERVER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_CWID_DATABASE=${{ secrets[format('WEB_DATABASE_NAME_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_CWID_DB_USERNAME=${{ secrets[format('WEB_DB_USER_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_CWID_DB_PASSWORD=${{ secrets[format('WEB_DB_PASSWORD_{0}', inputs.environment)] }} >> $GITHUB_ENV
+        echo TF_VAR_CWID_DB_DRIVER=${{ secrets[format('WEB_DB_DRIVER_{0}', inputs.environment)] }} >> $GITHUB_ENV
 
         echo TF_VAR_JXURL=${{ secrets[format('WEB_JXURL_{0}', inputs.environment)] }} >> $GITHUB_ENV
         echo TF_VAR_JOURNYX_USER=${{ secrets[format('WEB_JOURNYX_USER_{0}', inputs.environment)] }} >> $GITHUB_ENV
