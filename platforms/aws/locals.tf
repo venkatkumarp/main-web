@@ -58,13 +58,13 @@ locals {
       tenantId    = "this-is-tenantid"
       redirectUri = "this-is-redirect-uri-value"
       code_challenge_method = "addmethod"
-      web_secrets = "/tt/${local.environment}/web-secrets5"
+      web_secrets = "/tt/${local.environment}/web-secrets6"
     }
   }, var.aws_account_id, null)
 
   # Dynamically construct the secret names based on environment
   #web_secrets = "/tt/${local.environment}/web-secrets5"
-  cwid_db_secrets = "/tt/${local.environment}/cwid-db-secrets5"
-  sap_hana_secrets = "/tt/${local.environment}/sap-secrets5"
-  journyx_secrets = "/tt/${local.environment}/journyx-secrets5"
+  cwid_db_secrets = "/tt/${local.environment}/cwid-db-secrets6"
+  sap_hana_secrets = "/tt/${local.environment}/sap-secrets6"
+  journyx_secrets = "/tt/${local.environment}/journyx-secrets6"
 }
