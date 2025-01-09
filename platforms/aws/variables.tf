@@ -12,11 +12,17 @@ variable "code_challenge" {}
 #variable "commit_id" {}
 
 #cwid db details
-variable "db_server" {}
-variable "database_name" {}
-variable "db_user" {}
-variable "db_password" {}
-variable "db_driver" {}
+#variable "db_server" {}
+#variable "database_name" {}
+#variable "db_user" {}
+#variable "db_password" {}
+#variable "db_driver" {}
+
+variable "CWID_DB_SERVER" {} 
+variable "CWID_DATABASE" {}  
+variable "CWID_DB_USERNAME" {}
+variable "CWID_DB_PASSWORD" {}
+variable "CWID_DB_DRIVER" {}
 
 # joutnyx details
 variable "JXURL" {}
