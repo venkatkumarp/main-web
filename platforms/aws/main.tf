@@ -132,5 +132,5 @@ module "lambda_gettoken" {
   redirectUri  = local.secrets.redirectUri
   code_verifier = var.code_verifier
   code_challenge = var.code_challenge
-  #code_challenge_method = module.secrets_manager.secret_values[local.web_secrets]["code_challenge_method"]
+  code_challenge_method = local.secrets.code_challenge_method
 }
