@@ -8,7 +8,9 @@ module "secrets_manager" {
   source = "./modules/secrets_manager"
   secrets = {
     "${local.secrets.web_secrets}" = {
-      description = "Secret 1 for application A"
+      environment           = local.environment
+      default_tags          = local.default_tags
+      project_name          = local.project_name
       secret_values = {
         cdnurl  =  local.secrets.cdnurl
         tenantId    = local.secrets.tenantId
