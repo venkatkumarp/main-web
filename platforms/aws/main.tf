@@ -11,6 +11,7 @@ module "secrets_manager" {
   project_name          = local.project_name
   secrets = {
     "${local.secrets.web_secrets}" = {
+      description = "Secret for web secrets"
       secret_values = {
         cdnurl  =  local.secrets.cdnurl
         tenantId    = local.secrets.tenantId
@@ -23,7 +24,7 @@ module "secrets_manager" {
     }
 
     "${local.cwid_db_secrets}" = {
-      #description = "Secret for cwid db"
+      description = "Secret for cwid db"
       secret_values = {
         CWID_DB_SERVER = var.CWID_DB_SERVER
         CWID_DATABASE  = var.CWID_DATABASE
@@ -40,7 +41,7 @@ module "secrets_manager" {
       }
     }
     "${local.sap_hana_secrets}" = {
-      #description = "Secret for sap hana secrets"
+      description = "Secret for sap hana secrets"
       secret_values = {
         #sapuser = var.sapuser
         #sapid = var.sapid
@@ -54,7 +55,7 @@ module "secrets_manager" {
     }
 
     "${local.journyx_secrets}" = {
-      #description = "Secret  for journyx secrets"
+      description = "Secret  for journyx secrets"
       secret_values = {
         JXURL = var.JXURL
         JOURNYX_USER = var.JOURNYX_USER
