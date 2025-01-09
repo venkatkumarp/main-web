@@ -8,7 +8,20 @@ resource "aws_secretsmanager_secret_version" "this" {
   secret_id    = aws_secretsmanager_secret.this[each.key].id
   secret_string = jsonencode(each.value.secret_values)
 }
+variable "default_tags" {
+  description = "Default tags for resources"
+  type        = map(string)
+}
 
+variable "environment" {
+  description = "Environment for the deployment"
+  type        = string
+}
+
+variable "project_name" {
+  description = "Project name for S3 bucket"
+  type        = string
+}
 variable "secrets" {
   type        = map(object({
     secret_values = map(string)
