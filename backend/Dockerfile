@@ -11,7 +11,9 @@ WORKDIR ${LAMBDA_TASK_ROOT}/backend
 
 RUN pip3 install wheel --target "${LAMBDA_TASK_ROOT}"
 
-RUN poetry export --without-hashes -o requirements.txt
+#RUN poetry export --without-hashes -o requirements.txt
+RUN poetry config virtualenvs.create false \
+    && poetry export --without-hashes --format=requirements.txt > requirements.txt
 
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
