@@ -79,11 +79,11 @@ locals {
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
   lambda_function_names = lookup({
-    "590183961751" = "dev-time-tracking-fastapi-function"
+    "590183961751" = "myfun"
   }, var.aws_account_id, null)
 
   ecr_repo_names = lookup({
-    "590183961751" = "dev-time-tracking-ecr"
+    "590183961751" = "test-repo"
   }, var.aws_account_id, null)
 
   image_tags = lookup({
