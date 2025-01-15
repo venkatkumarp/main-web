@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #set -euo pipefail
 set -e
+set -x
 
 # Function for logging to stderr (won't affect JSON output)
 log() {
