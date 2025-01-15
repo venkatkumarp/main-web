@@ -6,7 +6,7 @@ authors = ["Shrijeet-Srivastava <106809277+Shrijeet-Srivastava@users.noreply.git
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 fastapi = "^0.115.5"
 uvicorn = "^0.32.0"
 requests = "^2.32.3"
