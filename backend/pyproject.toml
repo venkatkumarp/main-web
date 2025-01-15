@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "This will be used to manage the dependency for project."
 authors = ["Shrijeet-Srivastava <106809277+Shrijeet-Srivastava@users.noreply.github.com>"]
 readme = "README.md"
-package-mode = false
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
