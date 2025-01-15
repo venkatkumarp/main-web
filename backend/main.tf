@@ -66,11 +66,11 @@ locals {
   environment_suffix = lookup(local.suffixes, var.aws_account_id, "")
 
   environments = {
-    "590183961751" = "dev"
+    "440744244651" = "dev"
   }
 
   suffixes = {
-    "590183961751" = "dev"
+    "440744244651" = "dev"
   }
 
   aws_region = "eu-central-1"
@@ -79,15 +79,15 @@ locals {
   aws_infra_deploy_role = "arn:aws:iam::${var.aws_account_id}:role/infra-dev-deploy-role"
 
   lambda_function_names = lookup({
-    "590183961751" = "myfun"
+    "440744244651" = "myfun"
   }, var.aws_account_id, null)
 
   ecr_repo_names = lookup({
-    "590183961751" = "test-repo"
+    "440744244651" = "test-repo"
   }, var.aws_account_id, null)
 
   image_tags = lookup({
-    "590183961751" = "api-latest"
+    "440744244651" = "api-latest"
   }, var.aws_account_id, null)
 
 }
